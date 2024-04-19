@@ -1,6 +1,6 @@
-[gd_scene load_steps=6 format=3 uid="uid://dgb4gu64kriy"]
+[gd_scene load_steps=9 format=3 uid="uid://dgb4gu64kriy"]
 
-[ext_resource type="Texture2D" uid="uid://y0pwbxxbhd0e" path="res://icon.svg" id="1_r7rrk"]
+[ext_resource type="Texture2D" uid="uid://dfhtjqsdl6xr1" path="res://addons/kenney_prototype_textures/dark/texture_02.png" id="2_8638c"]
 [ext_resource type="PackedScene" uid="uid://ce83548hu0v66" path="res://scenes/player.tscn" id="2_istcs"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lmsb1"]
@@ -16,12 +16,16 @@ sky = SubResource("Sky_5263f")
 tonemap_mode = 2
 glow_enabled = true
 
-[node name="Game" type="Node3D"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_tx52u"]
+size = Vector3(33.3105, 1, 32.0295)
 
-[node name="Ground" type="Sprite3D" parent="."]
-transform = Transform3D(50, 0, 0, 0, -2.18557e-06, 50, 0, -50, -2.18557e-06, 0, 0, 0)
-alpha_antialiasing_mode = 1
-texture = ExtResource("1_r7rrk")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1udci"]
+albedo_texture = ExtResource("2_8638c")
+
+[sub_resource type="BoxMesh" id="BoxMesh_n5vkw"]
+material = SubResource("StandardMaterial3D_1udci")
+
+[node name="Game" type="Node3D"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_7x16k")
@@ -32,3 +36,12 @@ shadow_enabled = true
 
 [node name="Player" parent="." instance=ExtResource("2_istcs")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 13.6846, -1.1)
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_tx52u")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(33.2115, 0, 0, 0, 1, 0, 0, 0, 32.0678, 0, 0, 0)
+mesh = SubResource("BoxMesh_n5vkw")
