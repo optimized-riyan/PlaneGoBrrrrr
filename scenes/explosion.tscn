@@ -28,6 +28,7 @@ disable_receive_shadows = true
 material = SubResource("StandardMaterial3D_r6xag")
 
 [node name="GPUParticles3D" type="GPUParticles3D"]
+cast_shadow = 0
 emitting = false
 amount = 15
 lifetime = 0.5

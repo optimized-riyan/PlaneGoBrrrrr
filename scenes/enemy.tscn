@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://cynn8wkthaea3"]
+
+[ext_resource type="PackedScene" uid="uid://bnragyc45h2nb" path="res://models/f16/f16.glb" id="1_046gn"]
+
+[node name="Enemy" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.903427)
+
+[node name="Jet" parent="." instance=ExtResource("1_046gn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.745283, 0)

@@ -2,7 +2,7 @@ extends CharacterBody3D
 
 
 const MAX_SPEED: float = 50.
-const MIN_SPEED: float = 20.
+const MIN_SPEED: float = 0.
 const ROLL_SPEED: float = 2.
 const PITCH_SPEED: float = 2.
 const YAW_SPEED: float = 1.
@@ -23,10 +23,10 @@ var yaw_left: bool = false
 var yaw_right: bool = false
 var accelerate: bool = false
 var decelerate: bool = false
-var speed: float = MAX_SPEED
+var speed: float = MIN_SPEED
 var firing_cooldown: int = FIRE_RATE
 
-func _process(delta):
+func _process(_delta):
 	if Input.is_action_pressed("roll_left"): roll_left = true
 	if Input.is_action_pressed("roll_right"): roll_right = true
 	if Input.is_action_pressed("pitch_up"): pitch_up = true

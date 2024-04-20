@@ -1,5 +1,6 @@
-[gd_scene load_steps=9 format=3 uid="uid://dgb4gu64kriy"]
+[gd_scene load_steps=10 format=3 uid="uid://dgb4gu64kriy"]
 
+[ext_resource type="Script" path="res://scripts/game.gd" id="1_hsmk7"]
 [ext_resource type="Texture2D" uid="uid://dfhtjqsdl6xr1" path="res://addons/kenney_prototype_textures/dark/texture_02.png" id="2_8638c"]
 [ext_resource type="PackedScene" uid="uid://ce83548hu0v66" path="res://scenes/player.tscn" id="2_istcs"]
 
@@ -26,6 +27,8 @@ albedo_texture = ExtResource("2_8638c")
 material = SubResource("StandardMaterial3D_1udci")
 
 [node name="Game" type="Node3D"]
+script = ExtResource("1_hsmk7")
+enemy_spawn_pos = Vector3(0, 20, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_7x16k")
@@ -33,9 +36,6 @@ environment = SubResource("Environment_7x16k")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.871214, 0.49009, -0.0282584, 0, 0.0575641, 0.998342, 0.490904, -0.869769, 0.0501506, 0, 0, 0)
 shadow_enabled = true
-
-[node name="Player" parent="." instance=ExtResource("2_istcs")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 13.6846, -1.1)
 
 [node name="Ground" type="StaticBody3D" parent="."]
 
@@ -45,3 +45,11 @@ shape = SubResource("BoxShape3D_tx52u")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
 transform = Transform3D(33.2115, 0, 0, 0, 1, 0, 0, 0, 32.0678, 0, 0, 0)
 mesh = SubResource("BoxMesh_n5vkw")
+
+[node name="Player" parent="." instance=ExtResource("2_istcs")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.10525, -1.1)
+
+[node name="NetworkTimer" type="Timer" parent="."]
+wait_time = 0.1
+
+[connection signal="timeout" from="NetworkTimer" to="." method="_on_network_timer_timeout"]
