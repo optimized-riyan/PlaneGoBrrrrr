@@ -1,4 +1,4 @@
-[gd_scene load_steps=69 format=3 uid="uid://ce83548hu0v66"]
+[gd_scene load_steps=70 format=3 uid="uid://ce83548hu0v66"]
 
 [ext_resource type="Texture2D" uid="uid://rmcolsk4duvv" path="res://models/f16/f16_Image_0.png" id="1_sq02g"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_uu7w7"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://ji42ff6ruo68" path="res://models/f16/f16_Image_3.png" id="4_x8vdq"]
 [ext_resource type="Texture2D" uid="uid://s0ueuwvnqt6" path="res://models/f16/f16_Image_1.png" id="5_uycwe"]
 [ext_resource type="Texture2D" uid="uid://ufil3bjd2cr0" path="res://models/f16/f16_Image_2.png" id="6_urehx"]
+[ext_resource type="PackedScene" uid="uid://bre3ontwjqa6e" path="res://scenes/gun.tscn" id="8_xk4xs"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o4w3s"]
 resource_name = "Material_0"
@@ -1101,12 +1102,8 @@ transform = Transform3D(0.160892, 0, 0, 0, -7.03281e-09, -0.160892, 0, 0.160892,
 visible = false
 mesh = SubResource("CylinderMesh_mt72q")
 
-[node name="GunRay" type="RayCast3D" parent="Jet"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.655626, -0.637387)
-enabled = false
-exclude_parent = false
-target_position = Vector3(0, -300, 0)
-hit_back_faces = false
+[node name="Gun" parent="Jet" instance=ExtResource("8_xk4xs")]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.569711, -0.534831)
 
 [node name="ThirdPersonCam" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, 5.678)

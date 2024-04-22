@@ -48,8 +48,3 @@ mesh = SubResource("BoxMesh_n5vkw")
 
 [node name="Player" parent="." instance=ExtResource("2_istcs")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.10525, -1.1)
-
-[node name="NetworkTimer" type="Timer" parent="."]
-wait_time = 0.1
-
-[connection signal="timeout" from="NetworkTimer" to="." method="_on_network_timer_timeout"]

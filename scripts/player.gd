@@ -7,11 +7,9 @@ const ROLL_SPEED: float = 2.
 const PITCH_SPEED: float = 2.
 const YAW_SPEED: float = 1.
 const ACCEL: float = 15.
-const FIRE_RATE: int = 10  # number of frames between shots
 
 @onready var jet_model = $Jet
 @onready var initial_camera_pos = $ThirdPersonCam.position
-@onready var gun_ray: RayCast3D = $Jet/GunRay
 @onready var third_person_cam = $ThirdPersonCam
 @onready var explosion_ps = preload("res://scenes/explosion.tscn")
 
@@ -24,7 +22,7 @@ var yaw_right: bool = false
 var accelerate: bool = false
 var decelerate: bool = false
 var speed: float = MIN_SPEED
-var firing_cooldown: int = FIRE_RATE
+var is_firing: bool = false
 
 func _process(_delta):
 	if Input.is_action_pressed("roll_left"): roll_left = true
@@ -42,17 +40,11 @@ func _process(_delta):
 		else:
 			$ThirdPersonCam.make_current()
 	
-	firing_cooldown = firing_cooldown - 1 if firing_cooldown > 0 else 0
-	
 	if Input.is_action_pressed("fire"):
-		if firing_cooldown == 0:
-			firing_cooldown = FIRE_RATE
-			gun_ray.force_raycast_update()
-			if gun_ray.is_colliding():
-				var explosion: GPUParticles3D = explosion_ps.instantiate()
-				add_child(explosion)
-				explosion.emitting = true
-				explosion.global_position = gun_ray.get_collision_point()
+		is_firing = true
+		$Jet/Gun.fire()
+	else:
+		is_firing = false
 
 func _physics_process(delta):
 	if roll_left:
