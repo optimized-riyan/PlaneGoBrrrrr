@@ -33,7 +33,7 @@ public partial class Player : CharacterBody3D
     public override void _Ready()
     {
         _jetModel = GetNode<Node3D>("Jet");
-        _thirdPersonCam = GetNode<Camera3D>("ThirdPersonCam");
+        _thirdPersonCam = GetNode<Camera3D>("SpringArm3D/ThirdPersonCam");
         _initialCameraPos = _thirdPersonCam.Position;
         _explosionPS = GD.Load<PackedScene>("res://scenes/explosion.tscn");
     }
