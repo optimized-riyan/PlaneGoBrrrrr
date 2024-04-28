@@ -1,12 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://dgb4gu64kriy"]
+[gd_scene load_steps=13 format=3 uid="uid://dgb4gu64kriy"]
 
-[ext_resource type="Script" path="res://scripts/game.gd" id="1_hsmk7"]
-[ext_resource type="Texture2D" uid="uid://dfhtjqsdl6xr1" path="res://addons/kenney_prototype_textures/dark/texture_02.png" id="2_8638c"]
+[ext_resource type="Script" path="res://scripts/Game.cs" id="1_hsmk7"]
+[ext_resource type="Texture2D" uid="uid://dlcs15dqk6wrw" path="res://addons/kenney_prototype_textures/dark/texture_02.png" id="2_8638c"]
 [ext_resource type="PackedScene" uid="uid://ce83548hu0v66" path="res://scenes/player.tscn" id="2_istcs"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lmsb1"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
-ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
 
 [sub_resource type="Sky" id="Sky_5263f"]
 sky_material = SubResource("ProceduralSkyMaterial_lmsb1")
@@ -16,6 +15,8 @@ background_mode = 2
 sky = SubResource("Sky_5263f")
 tonemap_mode = 2
 glow_enabled = true
+fog_density = 0.0158
+volumetric_fog_albedo = Color(1, 0.2, 0.211765, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_tx52u"]
 size = Vector3(33.3105, 1, 32.0295)
@@ -26,9 +27,19 @@ albedo_texture = ExtResource("2_8638c")
 [sub_resource type="BoxMesh" id="BoxMesh_n5vkw"]
 material = SubResource("StandardMaterial3D_1udci")
 
+[sub_resource type="LabelSettings" id="LabelSettings_cph1f"]
+font_size = 32
+shadow_size = 4
+shadow_color = Color(0, 0, 0, 0.968627)
+
+[sub_resource type="LabelSettings" id="LabelSettings_2i6se"]
+font_size = 24
+
+[sub_resource type="LabelSettings" id="LabelSettings_ndi4p"]
+font_size = 20
+
 [node name="Game" type="Node3D"]
 script = ExtResource("1_hsmk7")
-enemy_spawn_pos = Vector3(0, 20, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_7x16k")
@@ -48,3 +59,75 @@ mesh = SubResource("BoxMesh_n5vkw")
 
 [node name="Player" parent="." instance=ExtResource("2_istcs")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.10525, -1.1)
+
+[node name="GameTimer" type="Timer" parent="."]
+wait_time = 600.0
+one_shot = true
+
+[node name="UIRoot" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TimeLeft" type="Label" parent="UIRoot"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.397
+anchor_right = 0.603
+anchor_bottom = 0.076
+offset_left = -0.344025
+offset_right = 0.343933
+offset_bottom = -0.248005
+grow_horizontal = 2
+text = "12:00"
+label_settings = SubResource("LabelSettings_cph1f")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ScoreBoard" type="VBoxContainer" parent="UIRoot"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.235
+anchor_top = 0.122
+anchor_right = 0.765
+anchor_bottom = 0.998
+offset_left = 0.279968
+offset_top = -0.0560074
+offset_right = -0.280029
+offset_bottom = 0.295959
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Player1" type="HBoxContainer" parent="UIRoot/ScoreBoard"]
+layout_mode = 2
+theme_override_constants/separation = 315
+
+[node name="Name" type="Label" parent="UIRoot/ScoreBoard/Player1"]
+layout_mode = 2
+text = "Player 1"
+label_settings = SubResource("LabelSettings_2i6se")
+
+[node name="Score" type="Label" parent="UIRoot/ScoreBoard/Player1"]
+layout_mode = 2
+text = "200"
+label_settings = SubResource("LabelSettings_ndi4p")
+
+[node name="Player2" type="HBoxContainer" parent="UIRoot/ScoreBoard"]
+layout_mode = 2
+theme_override_constants/separation = 315
+
+[node name="Name" type="Label" parent="UIRoot/ScoreBoard/Player2"]
+layout_mode = 2
+text = "Player 1"
+label_settings = SubResource("LabelSettings_2i6se")
+
+[node name="Score" type="Label" parent="UIRoot/ScoreBoard/Player2"]
+layout_mode = 2
+text = "200"
+label_settings = SubResource("LabelSettings_ndi4p")
+
+[connection signal="Resurrected" from="Player" to="." method="OnPlayerResurrected"]

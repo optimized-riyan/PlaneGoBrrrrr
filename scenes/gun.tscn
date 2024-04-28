@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bre3ontwjqa6e"]
 
-[ext_resource type="Script" path="res://scripts/gun.gd" id="1_hvges"]
+[ext_resource type="Script" path="res://scripts/Gun.cs" id="1_hvges"]
 
 [node name="Gun" type="RayCast3D"]
 target_position = Vector3(0, -300, 0)
