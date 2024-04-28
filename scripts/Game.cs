@@ -105,8 +105,8 @@ public partial class Game : Node3D
     {
         Tween tween = CreateTween();
         tween.TweenProperty(_enemy, "position", (Vector3)values["position"], .1);
-        tween.TweenProperty(_enemy, "rotation", (Vector3)values["rotation"], .1);
-        tween.TweenProperty(_enemy.GetNode<Node3D>("Jet"), "rotation", (Vector3)values["model_rotation"], .1);
+        tween.TweenProperty(_enemy, "quaternion", (Quaternion)values["quaternion"], .1);
+        tween.TweenProperty(_enemy.GetNode<Node3D>("Jet"), "quaternion", (Quaternion)values["model_quaternion"], .1);
         _enemy.IsFiring = (float)values["fire"] > 0;
     }
 
@@ -115,9 +115,9 @@ public partial class Game : Node3D
         Dictionary<string, Variant> values = new Dictionary<string, Variant>
         {
             { "position", _player.Position },
-            { "rotation", _player.Rotation },
-            { "model_rotation", _enemy.GetNode<Node3D>("Jet").Rotation },
-            { "fire", _player.IsFiring }
+            { "quaternion", _player.Quaternion },
+            { "model_quaternion", _enemy.GetNode<Node3D>("Jet").Quaternion },
+            { "fire", _player.IsFiring ? 1f : -1f }
         };
         RpcId(_enemyPeerId, MethodName.UpdateEnemy, values);
     }
