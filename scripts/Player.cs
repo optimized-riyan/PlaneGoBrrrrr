@@ -40,33 +40,31 @@ public partial class Player : CharacterBody3D
 
     public override void _Process(double delta)
     {
-        if (_isAlive)
+        if (!_isAlive) return;
+        if (Input.IsActionPressed("roll_left")) _rollLeft = true;
+        if (Input.IsActionPressed("roll_right")) _rollRight = true;
+        if (Input.IsActionPressed("pitch_up")) _pitchUp = true;
+        if (Input.IsActionPressed("pitch_down")) _pitchDown = true;
+        if (Input.IsActionPressed("yaw_left")) _yawLeft = true;
+        if (Input.IsActionPressed("yaw_right")) _yawRight = true;
+        if (Input.IsActionPressed("accelerate")) _accelerate = true;
+        if (Input.IsActionPressed("decelerate")) _decelerate = true;
+
+        if (Input.IsActionJustPressed("change_camera"))
         {
-            if (Input.IsActionPressed("roll_left")) _rollLeft = true;
-            if (Input.IsActionPressed("roll_right")) _rollRight = true;
-            if (Input.IsActionPressed("pitch_up")) _pitchUp = true;
-            if (Input.IsActionPressed("pitch_down")) _pitchDown = true;
-            if (Input.IsActionPressed("yaw_left")) _yawLeft = true;
-            if (Input.IsActionPressed("yaw_right")) _yawRight = true;
-            if (Input.IsActionPressed("accelerate")) _accelerate = true;
-            if (Input.IsActionPressed("decelerate")) _decelerate = true;
-
-            if (Input.IsActionJustPressed("change_camera"))
-            {
-                if (GetViewport().GetCamera3D() == _thirdPersonCam)
-                    GetNode<Camera3D>("Jet/NoseCam").MakeCurrent();
-                else
-                    _thirdPersonCam.MakeCurrent();
-            }
-
-            if (Input.IsActionPressed("fire"))
-            {
-                IsFiring = true;
-                GetNode<Gun>("Jet/Gun").Fire();
-            }
+            if (GetViewport().GetCamera3D() == _thirdPersonCam)
+                GetNode<Camera3D>("Jet/NoseCam").MakeCurrent();
             else
-                IsFiring = false;
+                _thirdPersonCam.MakeCurrent();
         }
+
+        if (Input.IsActionPressed("fire"))
+        {
+            IsFiring = true;
+            GetNode<Gun>("Jet/Gun").Fire();
+        }
+        else
+            IsFiring = false;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -127,7 +125,7 @@ public partial class Player : CharacterBody3D
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = false, TransferChannel = 0, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
-    public void Die()
+    private void Die()
     {
         _isAlive = false;
         _jetModel.Visible = false;
@@ -138,9 +136,16 @@ public partial class Player : CharacterBody3D
 
     private void Resurrect()
     {
+        Position = new Vector3(0, 3, 0);
+        Rotation = Vector3.Zero;
         _isAlive = true;
         _jetModel.Visible = true;
         GetNode<CollisionShape3D>("CollisionShape3D").Disabled = true;
         EmitSignal(SignalName.Resurrected);
+    }
+
+    public void KillOtherPlayer(long peerId)
+    {
+        RpcId(peerId, MethodName.Die);
     }
 }

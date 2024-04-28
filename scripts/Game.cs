@@ -60,9 +60,9 @@ public partial class Game : Node3D
 
         if (_enemyHealth <= 0)
         {
+            if (!_enemyIsAlive) return;
             _enemyIsAlive = false;
-            // _player.Die.RpcId(_enemyPeerId);
-            RpcId(_enemyPeerId, "player:die");
+            _player.KillOtherPlayer(_enemyPeerId);
             _enemy.Visible = false;
         }
     }
@@ -77,13 +77,14 @@ public partial class Game : Node3D
 
     private void OnPlayerConnected(long playerId)
     {
+        _enemyIsAlive = true;
         _enemyPeerId = playerId;
         _enemy = _enemyPS.Instantiate<Enemy>();
         _enemy.Position = _enemySpawnPos;
         _enemy.GetNode<CharacterBody3D>("Hitbox").Name = "Enemy";
         AddChild(_enemy);
         if (Multiplayer.IsServer())
-            RpcId(_enemyPeerId, "sync_time", _gameTimer.TimeLeft);
+            RpcId(_enemyPeerId, MethodName.SyncTime, _gameTimer.TimeLeft);
     }
 
     private void OnPlayerDisconnected(long playerId)
@@ -118,12 +119,14 @@ public partial class Game : Node3D
             { "model_rotation", _enemy.GetNode<Node3D>("Jet").Rotation },
             { "fire", _player.IsFiring }
         };
-        RpcId(_enemyPeerId, "update_enemy", values);
+        RpcId(_enemyPeerId, MethodName.UpdateEnemy, values);
     }
 
     private void OnEnemyHit()
     {
+        if (!_enemyIsAlive) return;
         _enemyHealth -= GunDamage;
+        GD.Print(_enemyHealth);
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = false, TransferChannel = 0, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
@@ -144,6 +147,6 @@ public partial class Game : Node3D
 
     private void OnPlayerResurrected()
     {
-        RpcId(_enemyPeerId, "resurrect_enemy");
+        RpcId(_enemyPeerId, MethodName.ResurrectEnemy);
     }
 }

@@ -1104,7 +1104,6 @@ mesh = SubResource("CylinderMesh_mt72q")
 
 [node name="Gun" parent="Jet" instance=ExtResource("8_xk4xs")]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.569711, -0.534831)
-enabled = false
 collision_mask = 3
 
 [node name="ThirdPersonCam" type="Camera3D" parent="."]

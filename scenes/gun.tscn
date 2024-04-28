@@ -3,5 +3,6 @@
 [ext_resource type="Script" path="res://scripts/Gun.cs" id="1_hvges"]
 
 [node name="Gun" type="RayCast3D"]
+enabled = false
 target_position = Vector3(0, -300, 0)
 script = ExtResource("1_hvges")
