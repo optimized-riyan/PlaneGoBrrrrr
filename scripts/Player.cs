@@ -1,4 +1,5 @@
 using Godot;
+using Godot.Collections;
 
 public partial class Player : RigidBody3D
 {
@@ -26,6 +27,11 @@ public partial class Player : RigidBody3D
     private bool _decelerate = false;
     private bool _isAlive = true;
     private float _speed = MinSpeed;
+    private Wing _frontLeftWing;
+    private Wing _frontRightWing;
+    private Wing _backLeftWing;
+    private Wing _backRightWing;
+    private Wing _rudder;
 
     public bool IsFiring = false;
 
@@ -36,6 +42,12 @@ public partial class Player : RigidBody3D
         _thirdPersonCam = GetNode<Camera3D>("SpringArm3D/ThirdPersonCam");
         _initialCameraPos = _thirdPersonCam.Position;
         _explosionPS = GD.Load<PackedScene>("res://scenes/explosion.tscn");
+
+        _frontLeftWing = GetNode<Wing>("FrontLeftWing");
+        _frontRightWing = GetNode<Wing>("FrontRightWing");
+        _backLeftWing = GetNode<Wing>("BackLeftWing");
+        _backRightWing = GetNode<Wing>("BackLeftWing");
+        _rudder = GetNode<Wing>("Rudder");
     }
 
     public override void _Process(double delta)
@@ -69,59 +81,76 @@ public partial class Player : RigidBody3D
 
     public override void _PhysicsProcess(double delta)
     {
-        float deltaF = (float)delta;
-        // if (_rollLeft)
-        // {
-        //     _rollLeft = false;
-        //     Rotate(Transform.Basis.Z, RollSpeed * deltaF);
-        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, 0, .6f), deltaF);
-        // }
-        // if (_rollRight)
-        // {
-        //     _rollRight = false;
-        //     Rotate(Transform.Basis.Z, -RollSpeed * deltaF);
-        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, 0, -.6f), deltaF);
-        // }
-        // if (_pitchUp)
-        // {
-        //     _pitchUp = false;
-        //     Rotate(Transform.Basis.X, PitchSpeed * deltaF);
-        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(.4f, 0, 0), deltaF);
-        // }
-        // if (_pitchDown)
-        // {
-        //     _pitchDown = false;
-        //     Rotate(Transform.Basis.X, -PitchSpeed * deltaF);
-        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(-.4f, 0, 0), deltaF);
-        // }
-        // if (_yawLeft)
-        // {
-        //     _yawLeft = false;
-        //     Rotate(Transform.Basis.Y, YawSpeed * deltaF);
-        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, .4f, .8f), deltaF);
-        // }
-        // if (_yawRight)
-        // {
-        //     _yawRight = false;
-        //     Rotate(Transform.Basis.Y, -YawSpeed * deltaF);
-        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, -.4f, -.8f), deltaF);
-        // }
+        float deltaF = (float) delta;
+        if (_rollLeft)
+        {
+            _rollLeft = false;
+            _frontLeftWing.FlapUp();
+            _frontRightWing.FlapDown();
+        }
+        if (_rollRight)
+        {
+            _rollRight = false;
+            _frontRightWing.FlapUp();
+            _frontLeftWing.FlapDown();
+        }
+        if (_pitchUp)
+        {
+            _pitchUp = false;
+            _backLeftWing.FlapUp();
+            _backRightWing.FlapUp();
+        }
+        if (_pitchDown)
+        {
+            _pitchDown = false;
+            _backLeftWing.FlapDown();
+            _backRightWing.FlapDown();
+        }
+        if (_yawLeft)
+        {
+            _yawLeft = false;
+            _rudder.FlapDown();
+        }
+        if (_yawRight)
+        {
+            _yawRight = false;
+            _rudder.FlapUp();
+        }
 
-        // if (_accelerate)
-        // {
-        //     _accelerate = false;
-        //     _speed = Mathf.Min(_speed + Accel * deltaF, MaxSpeed);
-        // }
-        // if (_decelerate)
-        // {
-        //     _decelerate = false;
-        //     _speed = Mathf.Max(_speed - Accel * deltaF, MinSpeed);
-        // }
-        //
-        // Velocity = -Transform.Basis.Z * _speed;
-        // _jetModel.Rotation = _jetModel.Rotation.Lerp(Vector3.Zero, deltaF * 4);
+        if (_accelerate)
+        {
+            _accelerate = false;
+            if (LinearVelocity.Length() < MaxSpeed)
+            {
+                ApplyCentralForce(Accel * -Transform.Basis.Z);
+            }
+        }
+        if (_decelerate)
+        {
+            _decelerate = false;
+            if (LinearVelocity.Length() < MinSpeed)
+            {
+                ApplyCentralForce(Accel/4 * Transform.Basis.Z);
+            }
+        }
 
-        // MoveAndSlide();
+        Vector3 totalForce = Vector3.Zero;
+        totalForce += ToLocal(_frontLeftWing.CalculateLift()) + ToLocal(_frontLeftWing.CalculateDrag());
+        totalForce += ToLocal(_frontRightWing.CalculateLift()) + ToLocal(_frontRightWing.CalculateDrag());
+        totalForce += ToLocal(_backLeftWing.CalculateLift()) + ToLocal(_backLeftWing.CalculateDrag());
+        totalForce += ToLocal(_backRightWing.CalculateLift()) + ToLocal(_backRightWing.CalculateDrag());
+        totalForce += ToLocal(_rudder.CalculateLift()) + ToLocal(_rudder.CalculateDrag());
+
+        ApplyCentralForce(totalForce * deltaF);
+
+        Vector3 totalTorque = Vector3.Zero;
+        totalTorque += ToLocal(_frontLeftWing.CalculateRotatoryForce()).Cross(_frontLeftWing.Position);
+        totalTorque += ToLocal(_frontRightWing.CalculateRotatoryForce()).Cross(_frontRightWing.Position);
+        totalTorque += ToLocal(_backLeftWing.CalculateRotatoryForce()).Cross(_backLeftWing.Position);
+        totalTorque += ToLocal(_backRightWing.CalculateRotatoryForce()).Cross(_backRightWing.Position);
+        totalTorque += ToLocal(_rudder.CalculateRotatoryForce()).Cross(_rudder.Position);
+
+        ApplyTorque(totalTorque * deltaF);
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = false, TransferChannel = 0, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]

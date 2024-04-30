@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Plane Go Brrrr (C#)"
+config/name="Plane Go Brrrr"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.2", "C#", "Forward Plus")
 config/icon="res://icon.svg"
@@ -21,7 +21,7 @@ Global="*res://singletons/global.tscn"
 
 [dotnet]
 
-project/assembly_name="Plane Go Brrrr (C#)"
+project/assembly_name="Plane Go Brrrrr"
 
 [editor_plugins]
 

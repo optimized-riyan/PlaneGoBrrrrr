@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dce4l2kolkwxd"]
+
+[ext_resource type="Script" path="res://scripts/Wing.cs" id="1_yhn35"]
+
+[node name="Wing" type="Node3D"]
+script = ExtResource("1_yhn35")

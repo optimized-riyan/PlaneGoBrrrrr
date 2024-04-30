@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://c4n23a32e05x"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ct6lu"]
+particle_flag_align_y = true
+gravity = Vector3(0, 0, 0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f6jc1"]
+cull_mode = 2
+
+[sub_resource type="TubeTrailMesh" id="TubeTrailMesh_qfusx"]
+material = SubResource("StandardMaterial3D_f6jc1")
+radius = 0.1
+cap_top = false
+cap_bottom = false
+
+[node name="Trail" type="GPUParticles3D"]
+amount = 1
+trail_enabled = true
+process_material = SubResource("ParticleProcessMaterial_ct6lu")
+draw_pass_1 = SubResource("TubeTrailMesh_qfusx")
