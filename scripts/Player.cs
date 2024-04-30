@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class Player : CharacterBody3D
+public partial class Player : RigidBody3D
 {
     [Signal]
     public delegate void ResurrectedEventHandler();
@@ -70,58 +70,58 @@ public partial class Player : CharacterBody3D
     public override void _PhysicsProcess(double delta)
     {
         float deltaF = (float)delta;
-        if (_rollLeft)
-        {
-            _rollLeft = false;
-            Rotate(Transform.Basis.Z, RollSpeed * deltaF);
-            _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, 0, .6f), deltaF);
-        }
-        if (_rollRight)
-        {
-            _rollRight = false;
-            Rotate(Transform.Basis.Z, -RollSpeed * deltaF);
-            _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, 0, -.6f), deltaF);
-        }
-        if (_pitchUp)
-        {
-            _pitchUp = false;
-            Rotate(Transform.Basis.X, PitchSpeed * deltaF);
-            _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(.4f, 0, 0), deltaF);
-        }
-        if (_pitchDown)
-        {
-            _pitchDown = false;
-            Rotate(Transform.Basis.X, -PitchSpeed * deltaF);
-            _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(-.4f, 0, 0), deltaF);
-        }
-        if (_yawLeft)
-        {
-            _yawLeft = false;
-            Rotate(Transform.Basis.Y, YawSpeed * deltaF);
-            _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, .4f, .8f), deltaF);
-        }
-        if (_yawRight)
-        {
-            _yawRight = false;
-            Rotate(Transform.Basis.Y, -YawSpeed * deltaF);
-            _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, -.4f, -.8f), deltaF);
-        }
+        // if (_rollLeft)
+        // {
+        //     _rollLeft = false;
+        //     Rotate(Transform.Basis.Z, RollSpeed * deltaF);
+        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, 0, .6f), deltaF);
+        // }
+        // if (_rollRight)
+        // {
+        //     _rollRight = false;
+        //     Rotate(Transform.Basis.Z, -RollSpeed * deltaF);
+        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, 0, -.6f), deltaF);
+        // }
+        // if (_pitchUp)
+        // {
+        //     _pitchUp = false;
+        //     Rotate(Transform.Basis.X, PitchSpeed * deltaF);
+        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(.4f, 0, 0), deltaF);
+        // }
+        // if (_pitchDown)
+        // {
+        //     _pitchDown = false;
+        //     Rotate(Transform.Basis.X, -PitchSpeed * deltaF);
+        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(-.4f, 0, 0), deltaF);
+        // }
+        // if (_yawLeft)
+        // {
+        //     _yawLeft = false;
+        //     Rotate(Transform.Basis.Y, YawSpeed * deltaF);
+        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, .4f, .8f), deltaF);
+        // }
+        // if (_yawRight)
+        // {
+        //     _yawRight = false;
+        //     Rotate(Transform.Basis.Y, -YawSpeed * deltaF);
+        //     _jetModel.Rotation = _jetModel.Rotation.Lerp(new Vector3(0, -.4f, -.8f), deltaF);
+        // }
 
-        if (_accelerate)
-        {
-            _accelerate = false;
-            _speed = Mathf.Min(_speed + Accel * deltaF, MaxSpeed);
-        }
-        if (_decelerate)
-        {
-            _decelerate = false;
-            _speed = Mathf.Max(_speed - Accel * deltaF, MinSpeed);
-        }
+        // if (_accelerate)
+        // {
+        //     _accelerate = false;
+        //     _speed = Mathf.Min(_speed + Accel * deltaF, MaxSpeed);
+        // }
+        // if (_decelerate)
+        // {
+        //     _decelerate = false;
+        //     _speed = Mathf.Max(_speed - Accel * deltaF, MinSpeed);
+        // }
+        //
+        // Velocity = -Transform.Basis.Z * _speed;
+        // _jetModel.Rotation = _jetModel.Rotation.Lerp(Vector3.Zero, deltaF * 4);
 
-        Velocity = -Transform.Basis.Z * _speed;
-        _jetModel.Rotation = _jetModel.Rotation.Lerp(Vector3.Zero, deltaF * 4);
-
-        MoveAndSlide();
+        // MoveAndSlide();
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = false, TransferChannel = 0, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]

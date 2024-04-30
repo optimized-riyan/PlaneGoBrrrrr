@@ -126,7 +126,6 @@ public partial class Game : Node3D
     {
         if (!_enemyIsAlive) return;
         _enemyHealth -= GunDamage;
-        GD.Print(_enemyHealth);
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = false, TransferChannel = 0, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
