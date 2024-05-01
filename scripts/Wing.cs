@@ -2,41 +2,65 @@ using Godot;
 
 public partial class Wing : Node3D
 {
-    // constants related to flight
+    [ExportGroup("Wing Properties")]
     [Export]
-    private const float LiftCurveSlope = .5f;
+    private float LiftCurveSlope = .5f;
     [Export]
-    private const float SkinFrictionCoeff = .01f;
+    private float SkinFrictionCoeff = .01f;
     [Export]
-    private const float ZeroAOA = .02f;
+    private float ZeroAOA = .02f;
     [Export]
-    private const float AspectRatio = 2f;
+    private float AspectRatio = 2f;
     [Export]
-    private const float CLAlpha = LiftCurveSlope * (AspectRatio / (AspectRatio + 2 * (AspectRatio + 4)/(AspectRatio + 2)));
+    private float ChordRatio = .2f;
     [Export]
-    private const float ChordRatio = .2f;
+    private float DeltaFlapAngle = .3f;
     [Export]
-    private const float DeltaFlapAngle = .3f;
+    private float SurfaceArea = 25f;
+    [Export]
+    private float StallAngle = .26179f;
 
+    [ExportGroup("Other Properties")]
+    [Export]
+    private float IndicatorScale = .3f;
+
+    private float CLAlpha;
     private Player _aircraft;
     private Global _global;
+    private MeshInstance3D _indicator;
     private Vector3 _velocity;
     private Vector3 _wind = Vector3.Zero;
     private float _coeffOfLift;
     private float _coeffOfDrag;
     private float _coeffOfTorque;
+    private float _lift;
+    private float _drag;
+    private float _rotatoryForce;
     private float _flapAngle;
+    private float _cNu;
+
+    public Wing()
+    {
+        CLAlpha = LiftCurveSlope * (AspectRatio / (AspectRatio + 2 * (AspectRatio + 4)/(AspectRatio + 2)));
+        _cNu = 1 - Mathf.Exp(-17/AspectRatio);
+    }
 
     public override void _Ready()
     {
         _aircraft = GetOwner<Player>();
         _global = GetNode<Global>("/root/Global");
+        _indicator = GetNode<MeshInstance3D>("Indicator");
+    }
+
+    public override void _Process(double delta)
+    {
     }
 
     public override void _PhysicsProcess(double delta)
     {
         _velocity = _aircraft.LinearVelocity + _aircraft.AngularVelocity.Cross(Position) + _wind;
         UpdateCoefficients();
+        UpdateIndicator();
         ResetFlap();
     }
 
@@ -46,13 +70,24 @@ public partial class Wing : Node3D
 
         alpha = (_velocity.Z == 0 && _velocity.X == 0) ? 0 : Mathf.Atan(_velocity.Z/_velocity.X);
         _coeffOfLift = CLAlpha * (alpha - ZeroAOA);
-        alpha = alpha - ZeroAOA - _coeffOfLift/(Mathf.Pi * AspectRatio);
-        cT = SkinFrictionCoeff * Mathf.Cos(alpha);
-        cN = (_coeffOfLift + cT * Mathf.Sin(alpha))/Mathf.Cos(alpha);
-        _coeffOfDrag = cN * Mathf.Sin(alpha) + cT * Mathf.Cos(alpha);
-        _coeffOfTorque = -cN * (.25f - .175f * (1 - 2 * alpha / Mathf.Pi));
+        if (Mathf.Abs(alpha) < StallAngle)
+        {
+            alpha = alpha - ZeroAOA - _coeffOfLift/(Mathf.Pi * AspectRatio);
+            cT = SkinFrictionCoeff * Mathf.Cos(alpha);
+            cN = (_coeffOfLift + cT * Mathf.Sin(alpha))/Mathf.Cos(alpha);
+            _coeffOfDrag = cN * Mathf.Sin(alpha) + cT * Mathf.Cos(alpha);
+            _coeffOfTorque = -cN * (.25f - .175f * (1 - 2 * alpha / Mathf.Pi));
+        }
+        else
+        {
+            cN = SkinFrictionCoeff * Mathf.Sin(alpha) * (1/(.56f + .44f * Mathf.Sin(alpha)) - .41f * _cNu);
+            cT = .5f * SkinFrictionCoeff * Mathf.Cos(alpha);
+            _coeffOfLift = cN * Mathf.Cos(alpha) - cT * Mathf.Sin(alpha);
+            _coeffOfDrag = cN * Mathf.Sin(alpha) + cT * Mathf.Cos(alpha);
+            _coeffOfTorque = -cN * (.25f - .175f * (1f - 2f * alpha / Mathf.Pi));
+        }
 
-        if (_flapAngle > 0)
+        if (Mathf.Abs(_flapAngle) > 0)
         {
             float theta = Mathf.Acos(2 * ChordRatio - 1);
             float tau = 1 - (theta - Mathf.Sin(theta))/Mathf.Pi;
@@ -78,16 +113,26 @@ public partial class Wing : Node3D
 
     public Vector3 CalculateLift()
     {
-        return ToGlobal(_coeffOfLift * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * Vector3.Up);
+        _lift = _coeffOfLift * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * SurfaceArea;
+        return _lift * Vector3.Up;
     }
 
     public Vector3 CalculateDrag()
     {
-        return ToGlobal(_coeffOfDrag * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * Vector3.Back);
+        _drag = _coeffOfDrag * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * SurfaceArea;
+        return _drag * Vector3.Back;
     }
 
     public Vector3 CalculateRotatoryForce()
     {
-        return ToGlobal(_coeffOfTorque * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * Vector3.Up);
+        _rotatoryForce = _coeffOfTorque * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * SurfaceArea;
+        return _rotatoryForce * Vector3.Up;
+    }
+
+    private void UpdateIndicator()
+    {
+        RibbonTrailMesh mesh = (RibbonTrailMesh)_indicator.Mesh;
+        mesh.SectionLength = IndicatorScale * _lift;
+        _indicator.Position = new Vector3(0, mesh.SectionLength, 0);
     }
 }
