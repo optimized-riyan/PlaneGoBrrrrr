@@ -44,7 +44,7 @@ public partial class Wing : Node3D
     {
         float alpha, cT, cN;
 
-        alpha = Mathf.Atan(_velocity.Z/_velocity.X);
+        alpha = (_velocity.Z == 0 && _velocity.X == 0) ? 0 : Mathf.Atan(_velocity.Z/_velocity.X);
         _coeffOfLift = CLAlpha * (alpha - ZeroAOA);
         alpha = alpha - ZeroAOA - _coeffOfLift/(Mathf.Pi * AspectRatio);
         cT = SkinFrictionCoeff * Mathf.Cos(alpha);

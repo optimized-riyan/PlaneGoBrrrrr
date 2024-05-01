@@ -141,7 +141,7 @@ public partial class Player : RigidBody3D
         totalForce += ToLocal(_backRightWing.CalculateLift()) + ToLocal(_backRightWing.CalculateDrag());
         totalForce += ToLocal(_rudder.CalculateLift()) + ToLocal(_rudder.CalculateDrag());
 
-        ApplyCentralForce(totalForce * deltaF);
+        ApplyCentralForce(-totalForce);
 
         Vector3 totalTorque = Vector3.Zero;
         totalTorque += ToLocal(_frontLeftWing.CalculateRotatoryForce()).Cross(_frontLeftWing.Position);
@@ -150,7 +150,7 @@ public partial class Player : RigidBody3D
         totalTorque += ToLocal(_backRightWing.CalculateRotatoryForce()).Cross(_backRightWing.Position);
         totalTorque += ToLocal(_rudder.CalculateRotatoryForce()).Cross(_rudder.Position);
 
-        ApplyTorque(totalTorque * deltaF);
+        ApplyTorque(-totalTorque);
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = false, TransferChannel = 0, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
