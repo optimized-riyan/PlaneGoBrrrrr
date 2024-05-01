@@ -8,7 +8,7 @@ public partial class Wing : Node3D
     [Export]
     private float SkinFrictionCoeff = .01f;
     [Export]
-    private float ZeroAOA = .02f;
+    private float ZeroAOABase = .02f;
     [Export]
     private float AspectRatio = 2f;
     [Export]
@@ -52,13 +52,9 @@ public partial class Wing : Node3D
         _indicator = GetNode<MeshInstance3D>("Indicator");
     }
 
-    public override void _Process(double delta)
-    {
-    }
-
     public override void _PhysicsProcess(double delta)
     {
-        _velocity = _aircraft.LinearVelocity + _aircraft.AngularVelocity.Cross(Position) + _wind;
+        _velocity = -_aircraft.LinearVelocity - _aircraft.AngularVelocity.Cross(Position) + _wind;
         UpdateCoefficients();
         UpdateIndicator();
         ResetFlap();
@@ -66,10 +62,14 @@ public partial class Wing : Node3D
 
     private void UpdateCoefficients()
     {
-        float alpha, cT, cN;
+        float alpha, cT, cN, ZeroAOA;
+        float theta = Mathf.Acos(2 * ChordRatio - 1);
+        float tau = 1 - (theta - Mathf.Sin(theta))/Mathf.Pi;
 
-        alpha = (_velocity.Z == 0 && _velocity.X == 0) ? 0 : Mathf.Atan(_velocity.Z/_velocity.X);
-        _coeffOfLift = CLAlpha * (alpha - ZeroAOA);
+        ZeroAOA = ZeroAOABase - tau * _global.Viscosity * _flapAngle;
+
+        alpha = (_velocity.Y == 0 && _velocity.Z == 0) ? 0 : Mathf.Atan2(_velocity.Y, _velocity.Z);
+        _coeffOfLift = CLAlpha * (alpha - ZeroAOABase);
         if (Mathf.Abs(alpha) < StallAngle)
         {
             alpha = alpha - ZeroAOA - _coeffOfLift/(Mathf.Pi * AspectRatio);
@@ -89,11 +89,10 @@ public partial class Wing : Node3D
 
         if (Mathf.Abs(_flapAngle) > 0)
         {
-            float theta = Mathf.Acos(2 * ChordRatio - 1);
-            float tau = 1 - (theta - Mathf.Sin(theta))/Mathf.Pi;
             float deltaLiftCoeff = CLAlpha * tau * _global.Viscosity * _flapAngle;
             _coeffOfLift -= deltaLiftCoeff;
         }
+        GD.PrintS(Name, _lift, _drag, _rotatoryForce);
     }
 
     public void FlapUp()
@@ -132,7 +131,7 @@ public partial class Wing : Node3D
     private void UpdateIndicator()
     {
         RibbonTrailMesh mesh = (RibbonTrailMesh)_indicator.Mesh;
-        mesh.SectionLength = IndicatorScale * _lift;
-        _indicator.Position = new Vector3(0, mesh.SectionLength, 0);
+        _indicator.Position = new Vector3(0, IndicatorScale * _lift, 0);
+        mesh.SectionLength = _indicator.Position.Y;
     }
 }

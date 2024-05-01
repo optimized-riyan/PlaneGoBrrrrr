@@ -46,7 +46,7 @@ public partial class Player : RigidBody3D
         _frontLeftWing = GetNode<Wing>("FrontLeftWing");
         _frontRightWing = GetNode<Wing>("FrontRightWing");
         _backLeftWing = GetNode<Wing>("BackLeftWing");
-        _backRightWing = GetNode<Wing>("BackLeftWing");
+        _backRightWing = GetNode<Wing>("BackRightWing");
         _rudder = GetNode<Wing>("Rudder");
     }
 
@@ -129,7 +129,7 @@ public partial class Player : RigidBody3D
             _accelerate = false;
             if (LinearVelocity.Length() < MaxSpeed)
             {
-                totalForce += Thrust * -Transform.Basis.Z;
+                totalForce += -Thrust * Transform.Basis.Z;
             }
         }
         if (_decelerate)
@@ -137,7 +137,7 @@ public partial class Player : RigidBody3D
             _decelerate = false;
             if (LinearVelocity.Length() < MinSpeed)
             {
-                totalForce += Thrust/4 * Transform.Basis.Z;
+                totalForce += Thrust/2 * Transform.Basis.Z;
             }
         }
 
@@ -147,9 +147,9 @@ public partial class Player : RigidBody3D
         totalTorque += _frontLeftWing.Position.Cross(_frontLeftWing.CalculateRotatoryForce());
         totalTorque += _frontRightWing.Position.Cross(_frontRightWing.CalculateRotatoryForce());
         totalTorque += _backLeftWing.Position.Cross(_backLeftWing.CalculateRotatoryForce());
-        totalTorque += _backRightWing.Position.Cross(_frontLeftWing.CalculateRotatoryForce());
+        totalTorque += _backRightWing.Position.Cross(_backRightWing.CalculateRotatoryForce());
         totalTorque += _rudder.Position.Cross(_rudder.CalculateRotatoryForce());
-
+        
         ApplyTorque(totalTorque);
     }
 

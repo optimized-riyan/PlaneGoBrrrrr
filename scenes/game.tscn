@@ -60,7 +60,7 @@ transform = Transform3D(255, 0, 0, 0, 1, 0, 0, 0, 255, 0, 0, 0)
 mesh = SubResource("BoxMesh_n5vkw")
 
 [node name="Player" parent="." instance=ExtResource("2_istcs")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.10525, -1.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.3491, -1.1)
 
 [node name="GameTimer" type="Timer" parent="."]
 wait_time = 600.0
