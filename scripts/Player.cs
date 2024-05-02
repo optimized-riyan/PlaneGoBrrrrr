@@ -1,5 +1,4 @@
 using Godot;
-using Godot.Collections;
 
 public partial class Player : RigidBody3D
 {
@@ -85,8 +84,8 @@ public partial class Player : RigidBody3D
         }
         if (_rollRight)
         {
-            _frontRightWing.FlapUp();
             _frontLeftWing.FlapDown();
+            _frontRightWing.FlapUp();
         }
         if (_pitchUp)
         {
@@ -120,7 +119,7 @@ public partial class Player : RigidBody3D
         }
         if (_decelerate)
         {
-            if (LinearVelocity.Length() < MinSpeed) totalForce += Thrust/2 * Transform.Basis.Z;
+            if (LinearVelocity.Length() < MinSpeed) totalForce += Thrust / 2 * Transform.Basis.Z;
         }
 
         ApplyCentralForce(totalForce);
@@ -131,7 +130,7 @@ public partial class Player : RigidBody3D
         totalTorque += _backLeftWing.Position.Cross(_backLeftWing.CalculateRotatoryForce());
         totalTorque += _backRightWing.Position.Cross(_backRightWing.CalculateRotatoryForce());
         totalTorque += _rudder.Position.Cross(_rudder.CalculateRotatoryForce());
-        
+
         ApplyTorque(totalTorque);
     }
 

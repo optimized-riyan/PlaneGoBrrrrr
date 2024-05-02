@@ -5,17 +5,15 @@ public partial class Wing : Node3D
 {
     [ExportGroup("Wing Properties")]
     [Export]
-    private float SkinFrictionCoeff = .01f;
+    private float SkinFrictionCoeff = .02f;
     [Export]
-    private float ZeroAOABase = .02f;
+    private float ZeroAOABase = 0;
     [Export]
     private float AspectRatio = 2f;
     [Export]
-    private float Chord = 3f;
+    private float Chord = 1f;
     [Export]
-    private float Span = 10f;
-    [Export]
-    private float ChordRatio = .2f;
+    private float FlapFraction = .1f;
     [Export]
     private float DeltaFlapAngle = .3f;
 
@@ -45,7 +43,7 @@ public partial class Wing : Node3D
 
     public Wing()
     {
-        _surfaceArea = Chord * Span;
+        _surfaceArea = Chord * Chord * AspectRatio;
         _cNu = 1 - Mathf.Exp(-17 / AspectRatio);
     }
 
@@ -61,12 +59,13 @@ public partial class Wing : Node3D
 
     public override void _Process(double delta)
     {
-        // GD.PrintS(Name, _lift, _drag, _rotatoryForce);
+        // GD.PrintS(_coeffOfLift, _coeffOfDrag, _coeffOfTorque);
     }
 
     public override void _PhysicsProcess(double delta)
     {
-        _velocity = ToLocal(_aircraft.LinearVelocity + _aircraft.AngularVelocity.Cross(Position) + _wind);
+        _velocity = ToLocal(-_aircraft.LinearVelocity - _aircraft.AngularVelocity.Cross(Position) + _wind);
+        _velocity = new Vector3(0, _velocity.Y, _velocity.Z);
         UpdateCoefficients();
         UpdateIndicator();
         ResetFlap();
@@ -75,14 +74,14 @@ public partial class Wing : Node3D
     private void UpdateCoefficients()
     {
         float alpha, zeroLiftAoA;
-        float theta = Mathf.Acos(2 * ChordRatio - 1);
+        float theta = Mathf.Acos(2 * FlapFraction - 1);
         float tau = 1 - (theta - Mathf.Sin(theta)) / Mathf.Pi;
+
+        alpha = Mathf.Atan2(_velocity.Y, -_velocity.Z);
 
         zeroLiftAoA = ZeroAOABase - tau * _global.Viscosity * _flapAngle;
 
         _dragCoeffAtStall = -4.26e-2f * _flapAngle * _flapAngle + 2.1e-1f * _flapAngle + 1.98f;
-
-        alpha = Mathf.Atan2(_velocity.Y, _velocity.Z);
 
         float alphaStallPos = zeroLiftAoA + _liftCoeffPosMaxBase / _cLAlpha;
         float alphaStallNeg = zeroLiftAoA + _liftCoeffNegMaxBase / _cLAlpha;
@@ -92,17 +91,23 @@ public partial class Wing : Node3D
         float paddedStallAnglePos = alphaStallPos - paddingAnglePos;
         float paddedStallAngleNeg = alphaStallNeg - paddingAngleNeg;
 
-        GD.PrintS(alpha, alphaStallPos, alphaStallNeg);
+        // GD.PrintS(alpha, alphaStallPos, alphaStallNeg);
 
         if (alpha < alphaStallPos && alpha > alphaStallNeg)
         {
-            (_coeffOfLift, _coeffOfDrag, _coeffOfTorque) = CalculateCoeffsAtLowAoA(alpha, zeroLiftAoA);
+            Vector3 coeffs = CalculateCoeffsAtLowAoA(alpha, zeroLiftAoA);
+            _coeffOfLift = coeffs.X;
+            _coeffOfDrag = coeffs.Y;
+            _coeffOfTorque = coeffs.Z;
         }
         else
         {
             if (alpha > paddedStallAnglePos || alpha < paddedStallAngleNeg)
             {
-                (_coeffOfLift, _coeffOfDrag, _coeffOfTorque) = CalculateCoeffsAtStall(alpha, zeroLiftAoA, alphaStallPos, alphaStallNeg);
+                Vector3 coeffs = CalculateCoeffsAtStall(alpha, zeroLiftAoA, alphaStallPos, alphaStallNeg);
+                _coeffOfLift = coeffs.X;
+                _coeffOfDrag = coeffs.Y;
+                _coeffOfTorque = coeffs.Z;
             }
             else
             {
@@ -122,7 +127,10 @@ public partial class Wing : Node3D
                     aerodynamicCoefficientsStall = CalculateCoeffsAtStall(paddedStallAngleNeg, zeroLiftAoA, alphaStallPos, alphaStallNeg);
                     lerpParam = (alpha - alphaStallPos) / (paddedStallAnglePos - alphaStallPos);
                 }
-                (_coeffOfLift, _coeffOfDrag, _coeffOfTorque) = aerodynamicCoefficientsLow.Lerp(aerodynamicCoefficientsStall, lerpParam);
+                Vector3 coeffs = aerodynamicCoefficientsLow.Lerp(aerodynamicCoefficientsStall, lerpParam);
+                _coeffOfLift = coeffs.X;
+                _coeffOfDrag = coeffs.Y;
+                _coeffOfTorque = coeffs.Z;
             }
         }
 

@@ -7,11 +7,11 @@ public partial class Global : Node
     [Export]
     public float Viscosity = 14f;
     [Export]
-    public float LiftCurveSlope = 1.5f;
+    public float LiftCurveSlope = 6.28f;
     [Export]
     public float AlphaStallPosBase = .2617f;
     [Export]
-    public float AlphaStallNegBase = .2617f;
+    public float AlphaStallNegBase = -.2617f;
     [Export]
     public float DeltaCLMax = .2f;
 

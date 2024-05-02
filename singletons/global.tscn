@@ -4,5 +4,3 @@
 
 [node name="Global" type="Node"]
 script = ExtResource("1_m5g8o")
-AirDensity = 1.225
-Viscosity = 14.0
