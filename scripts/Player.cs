@@ -74,7 +74,6 @@ public partial class Player : RigidBody3D
         }
         else
             IsFiring = false;
-        GD.Print(LinearVelocity);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -117,17 +116,11 @@ public partial class Player : RigidBody3D
 
         if (_accelerate)
         {
-            if (LinearVelocity.Length() < MaxSpeed)
-            {
-                totalForce += -Thrust * Transform.Basis.Z;
-            }
+            if (LinearVelocity.Length() < MaxSpeed) totalForce += -Thrust * Transform.Basis.Z;
         }
         if (_decelerate)
         {
-            if (LinearVelocity.Length() < MinSpeed)
-            {
-                totalForce += Thrust/2 * Transform.Basis.Z;
-            }
+            if (LinearVelocity.Length() < MinSpeed) totalForce += Thrust/2 * Transform.Basis.Z;
         }
 
         ApplyCentralForce(totalForce);

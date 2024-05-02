@@ -937,6 +937,8 @@ shadow_mesh = SubResource("ArrayMesh_sgjdr")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.745585, -1.09071)
 mass = 30.0
 physics_material_override = SubResource("PhysicsMaterial_r7lty")
+linear_damp_mode = 1
+angular_damp_mode = 1
 script = ExtResource("1_uu7w7")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -1119,22 +1121,29 @@ spring_length = 3.5
 current = true
 
 [node name="FrontLeftWing" parent="." instance=ExtResource("9_tm2dy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.711765, 0.811997, 1.49776)
-LiftCurveSlope = 0.1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.27085, 0.811997, 1.76748)
+SkinFrictionCoeff = 0.001
+AspectRatio = 3.2
 
 [node name="FrontRightWing" parent="." instance=ExtResource("9_tm2dy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.712, 0.812, 1.498)
-LiftCurveSlope = 0.1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.271, 0.812, 1.767)
+SkinFrictionCoeff = 0.001
+AspectRatio = 3.2
 
 [node name="BackLeftWing" parent="." instance=ExtResource("9_tm2dy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.584919, 0.812, 2.71858)
-LiftCurveSlope = 0.1
+SkinFrictionCoeff = 0.001
+ZeroAOABase = 0.0
+AspectRatio = 1.3
 
 [node name="BackRightWing" parent="." instance=ExtResource("9_tm2dy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.585, 0.812, 2.719)
-LiftCurveSlope = 0.1
+SkinFrictionCoeff = 0.001
+ZeroAOABase = 0.0
+AspectRatio = 1.3
 
 [node name="Rudder" parent="." instance=ExtResource("9_tm2dy")]
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 1.11254, 2.82445)
-LiftCurveSlope = 0.1
+SkinFrictionCoeff = 0.001
 ZeroAOABase = 0.0
+AspectRatio = 1.35
