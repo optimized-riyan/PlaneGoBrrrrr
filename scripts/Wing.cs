@@ -67,12 +67,13 @@ public partial class Wing : Node3D
         float tau = 1 - (theta - Mathf.Sin(theta))/Mathf.Pi;
 
         ZeroAOA = ZeroAOABase - tau * _global.Viscosity * _flapAngle;
+        GD.Print(tau * _global.Viscosity * _flapAngle);
 
         alpha = (_velocity.Y == 0 && _velocity.Z == 0) ? 0 : Mathf.Atan2(_velocity.Y, _velocity.Z);
-        _coeffOfLift = CLAlpha * (alpha - ZeroAOABase);
+        _coeffOfLift = CLAlpha * (alpha - ZeroAOA);
+        alpha = alpha - ZeroAOA - _coeffOfLift/(Mathf.Pi * AspectRatio);
         if (Mathf.Abs(alpha) < StallAngle)
         {
-            alpha = alpha - ZeroAOA - _coeffOfLift/(Mathf.Pi * AspectRatio);
             cT = SkinFrictionCoeff * Mathf.Cos(alpha);
             cN = (_coeffOfLift + cT * Mathf.Sin(alpha))/Mathf.Cos(alpha);
             _coeffOfDrag = cN * Mathf.Sin(alpha) + cT * Mathf.Cos(alpha);
@@ -92,7 +93,7 @@ public partial class Wing : Node3D
             float deltaLiftCoeff = CLAlpha * tau * _global.Viscosity * _flapAngle;
             _coeffOfLift -= deltaLiftCoeff;
         }
-        GD.PrintS(Name, _lift, _drag, _rotatoryForce);
+        // GD.PrintS(Name, _lift, _drag, _rotatoryForce);
     }
 
     public void FlapUp()

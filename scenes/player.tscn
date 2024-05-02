@@ -935,10 +935,8 @@ shadow_mesh = SubResource("ArrayMesh_sgjdr")
 
 [node name="Player" type="RigidBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.745585, -1.09071)
-mass = 12.0
+mass = 30.0
 physics_material_override = SubResource("PhysicsMaterial_r7lty")
-center_of_mass_mode = 1
-center_of_mass = Vector3(0, 0.780855, 1.5656)
 script = ExtResource("1_uu7w7")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -1139,3 +1137,4 @@ LiftCurveSlope = 0.1
 [node name="Rudder" parent="." instance=ExtResource("9_tm2dy")]
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 1.11254, 2.82445)
 LiftCurveSlope = 0.1
+ZeroAOABase = 0.0

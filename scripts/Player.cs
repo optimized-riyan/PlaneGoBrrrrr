@@ -8,10 +8,7 @@ public partial class Player : RigidBody3D
 
     private const float MaxSpeed = 50f;
     private const float MinSpeed = 0f;
-    private const float RollSpeed = 2f;
-    private const float PitchSpeed = 2f;
-    private const float YawSpeed = 1f;
-    private const float Thrust = 500f;
+    private const float Thrust = 150f;
 
     private Node3D _jetModel;
     private Camera3D _thirdPersonCam;
@@ -53,14 +50,14 @@ public partial class Player : RigidBody3D
     public override void _Process(double delta)
     {
         if (!_isAlive) return;
-        if (Input.IsActionPressed("roll_left")) _rollLeft = true;
-        if (Input.IsActionPressed("roll_right")) _rollRight = true;
-        if (Input.IsActionPressed("pitch_up")) _pitchUp = true;
-        if (Input.IsActionPressed("pitch_down")) _pitchDown = true;
-        if (Input.IsActionPressed("yaw_left")) _yawLeft = true;
-        if (Input.IsActionPressed("yaw_right")) _yawRight = true;
-        if (Input.IsActionPressed("accelerate")) _accelerate = true;
-        if (Input.IsActionPressed("decelerate")) _decelerate = true;
+        _rollLeft = Input.IsActionPressed("roll_left");
+        _rollRight = Input.IsActionPressed("roll_right");
+        _pitchUp = Input.IsActionPressed("pitch_up");
+        _pitchDown = Input.IsActionPressed("pitch_down");
+        _yawLeft = Input.IsActionPressed("yaw_left");
+        _yawRight = Input.IsActionPressed("yaw_right");
+        _accelerate = Input.IsActionPressed("accelerate");
+        _decelerate = Input.IsActionPressed("decelerate");
 
         if (Input.IsActionJustPressed("change_camera"))
         {
@@ -77,43 +74,37 @@ public partial class Player : RigidBody3D
         }
         else
             IsFiring = false;
+        GD.Print(LinearVelocity);
     }
 
     public override void _PhysicsProcess(double delta)
     {
-        float deltaF = (float) delta;
         if (_rollLeft)
         {
-            _rollLeft = false;
             _frontLeftWing.FlapUp();
             _frontRightWing.FlapDown();
         }
         if (_rollRight)
         {
-            _rollRight = false;
             _frontRightWing.FlapUp();
             _frontLeftWing.FlapDown();
         }
         if (_pitchUp)
         {
-            _pitchUp = false;
-            _backLeftWing.FlapUp();
-            _backRightWing.FlapUp();
-        }
-        if (_pitchDown)
-        {
-            _pitchDown = false;
             _backLeftWing.FlapDown();
             _backRightWing.FlapDown();
         }
+        if (_pitchDown)
+        {
+            _backLeftWing.FlapUp();
+            _backRightWing.FlapUp();
+        }
         if (_yawLeft)
         {
-            _yawLeft = false;
             _rudder.FlapDown();
         }
         if (_yawRight)
         {
-            _yawRight = false;
             _rudder.FlapUp();
         }
 
@@ -126,7 +117,6 @@ public partial class Player : RigidBody3D
 
         if (_accelerate)
         {
-            _accelerate = false;
             if (LinearVelocity.Length() < MaxSpeed)
             {
                 totalForce += -Thrust * Transform.Basis.Z;
@@ -134,7 +124,6 @@ public partial class Player : RigidBody3D
         }
         if (_decelerate)
         {
-            _decelerate = false;
             if (LinearVelocity.Length() < MinSpeed)
             {
                 totalForce += Thrust/2 * Transform.Basis.Z;
