@@ -7,7 +7,7 @@ public partial class Player : RigidBody3D
 
     private const float MaxSpeed = 50f;
     private const float MinSpeed = 0f;
-    private const float Thrust = 150f;
+    private const float Thrust = 1500f;
 
     private Node3D _jetModel;
     private Camera3D _thirdPersonCam;
@@ -44,10 +44,13 @@ public partial class Player : RigidBody3D
         _backLeftWing = GetNode<Wing>("BackLeftWing");
         _backRightWing = GetNode<Wing>("BackRightWing");
         _rudder = GetNode<Wing>("Rudder");
+
+        ApplyCentralImpulse(new Vector3(0, 0, -200));
     }
 
     public override void _Process(double delta)
     {
+        // GD.Print(AngularVelocity.Cross(_backLeftWing.Position));
         if (!_isAlive) return;
         _rollLeft = Input.IsActionPressed("roll_left");
         _rollRight = Input.IsActionPressed("roll_right");

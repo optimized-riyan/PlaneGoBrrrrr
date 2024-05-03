@@ -2,22 +2,20 @@
 
 [ext_resource type="Script" path="res://scripts/Wing.cs" id="1_yhn35"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l7r67"]
-cull_mode = 2
-albedo_color = Color(1, 0, 0.0156863, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1cjrs"]
+transparency = 1
+albedo_color = Color(0.427451, 0.556863, 0.960784, 0.607843)
+grow_amount = 0.631
 
-[sub_resource type="RibbonTrailMesh" id="RibbonTrailMesh_fyg8n"]
-material = SubResource("StandardMaterial3D_l7r67")
-shape = 0
-size = 0.065
-sections = 2
-section_segments = 1
+[sub_resource type="PlaneMesh" id="PlaneMesh_grmhk"]
+material = SubResource("StandardMaterial3D_1cjrs")
+size = Vector2(0.6, 0.6)
 
 [node name="Wing" type="Node3D"]
 script = ExtResource("1_yhn35")
 
 [node name="Indicator" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
 visible = false
+layers = 2
 cast_shadow = 0
-mesh = SubResource("RibbonTrailMesh_fyg8n")
+mesh = SubResource("PlaneMesh_grmhk")

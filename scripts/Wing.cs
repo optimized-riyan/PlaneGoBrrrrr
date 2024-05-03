@@ -17,10 +17,6 @@ public partial class Wing : Node3D
     [Export]
     private float DeltaFlapAngle = .3f;
 
-    [ExportGroup("Other Properties")]
-    [Export]
-    private float IndicatorScale = .3f;
-
     private float _cLAlpha;
     private float _surfaceArea;
     private float _liftCoeffNegMaxBase;
@@ -28,7 +24,7 @@ public partial class Wing : Node3D
 
     private Player _aircraft;
     private Global _global;
-    private MeshInstance3D _indicator;
+    private Vector3 _positionFromCOM;
     private Vector3 _velocity;
     private Vector3 _wind;
     private float _dragCoeffAtStall;
@@ -37,7 +33,7 @@ public partial class Wing : Node3D
     private float _coeffOfTorque;
     private float _lift;
     private float _drag;
-    private float _rotatoryForce;
+    private float _torque;
     private float _flapAngle;
     private float _cNu;
 
@@ -51,10 +47,10 @@ public partial class Wing : Node3D
     {
         _aircraft = GetOwner<Player>();
         _global = GetNode<Global>("/root/Global");
-        _indicator = GetNode<MeshInstance3D>("Indicator");
         _cLAlpha = _global.LiftCurveSlope * (AspectRatio / (AspectRatio + 2 * (AspectRatio + 4) / (AspectRatio + 2)));
         _liftCoeffPosMaxBase = _cLAlpha * (_global.AlphaStallPosBase - ZeroAOABase) + _global.DeltaCLMax;
         _liftCoeffNegMaxBase = _cLAlpha * (_global.AlphaStallNegBase - ZeroAOABase) + _global.DeltaCLMax;
+        _positionFromCOM = Position - _aircraft.CenterOfMass;
     }
 
     public override void _Process(double delta)
@@ -64,10 +60,9 @@ public partial class Wing : Node3D
 
     public override void _PhysicsProcess(double delta)
     {
-        _velocity = ToLocal(-_aircraft.LinearVelocity - _aircraft.AngularVelocity.Cross(Position) + _wind);
+        _velocity = -ToLocalBasis(_aircraft.LinearVelocity) + _aircraft.AngularVelocity.Cross(_positionFromCOM) + _wind;
         _velocity = new Vector3(0, _velocity.Y, _velocity.Z);
         UpdateCoefficients();
-        UpdateIndicator();
         ResetFlap();
     }
 
@@ -77,9 +72,10 @@ public partial class Wing : Node3D
         float theta = Mathf.Acos(2 * FlapFraction - 1);
         float tau = 1 - (theta - Mathf.Sin(theta)) / Mathf.Pi;
 
-        alpha = Mathf.Atan2(_velocity.Y, -_velocity.Z);
+        alpha = Mathf.Atan2(_velocity.Y, _velocity.Z);
+        GD.PrintS(Name, alpha);
 
-        zeroLiftAoA = ZeroAOABase - tau * _global.Viscosity * _flapAngle;
+        zeroLiftAoA = ZeroAOABase - tau * FlapEffectivenessCorrection(_flapAngle) * _flapAngle;
 
         _dragCoeffAtStall = -4.26e-2f * _flapAngle * _flapAngle + 2.1e-1f * _flapAngle + 1.98f;
 
@@ -88,10 +84,8 @@ public partial class Wing : Node3D
 
         float paddingAnglePos = Mathf.DegToRad(Mathf.Lerp(15, 5, (Mathf.RadToDeg(_flapAngle) + 50) / 100));
         float paddingAngleNeg = Mathf.DegToRad(Mathf.Lerp(15, 5, (-Mathf.RadToDeg(_flapAngle) + 50) / 100));
-        float paddedStallAnglePos = alphaStallPos - paddingAnglePos;
+        float paddedStallAnglePos = alphaStallPos + paddingAnglePos;
         float paddedStallAngleNeg = alphaStallNeg - paddingAngleNeg;
-
-        // GD.PrintS(alpha, alphaStallPos, alphaStallNeg);
 
         if (alpha < alphaStallPos && alpha > alphaStallNeg)
         {
@@ -133,7 +127,7 @@ public partial class Wing : Node3D
                 _coeffOfTorque = coeffs.Z;
             }
         }
-
+        GD.PrintS(Name, _lift, _drag, _torque);
     }
 
     public void FlapUp()
@@ -165,15 +159,8 @@ public partial class Wing : Node3D
 
     public Vector3 CalculateRotatoryForce()
     {
-        _rotatoryForce = _coeffOfTorque * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * _surfaceArea;
-        return _rotatoryForce * Vector3.Up;
-    }
-
-    private void UpdateIndicator()
-    {
-        RibbonTrailMesh mesh = (RibbonTrailMesh)_indicator.Mesh;
-        _indicator.Position = new Vector3(0, IndicatorScale * _lift, 0);
-        mesh.SectionLength = _indicator.Position.Y;
+        _torque = _coeffOfTorque * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * _surfaceArea;
+        return _torque * Vector3.Up;
     }
 
     private Vector3 CalculateCoeffsAtLowAoA(float alpha, float zeroLiftAOA)
@@ -218,5 +205,16 @@ public partial class Wing : Node3D
         float coeffOfTorque = -normalCoeff * (.25f - .175f * (1f - 2f * alphaEffective / Mathf.Pi));
 
         return new Vector3(coeffOfLift, coeffOfDrag, coeffOfTorque);
+    }
+
+    private Vector3 ToLocalBasis(Vector3 v)
+    {
+        Basis basis = Transform.Basis.Transposed();
+        return new Vector3(basis.X.Dot(v), basis.Y.Dot(v), basis.Z.Dot(v));
+    }
+
+    private float FlapEffectivenessCorrection(float flapAngle)
+    {
+        return Mathf.Lerp(0.8f, 0.4f, (Mathf.RadToDeg(Mathf.Abs(flapAngle)) - 10) / 50);
     }
 }
