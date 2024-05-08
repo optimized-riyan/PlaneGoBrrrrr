@@ -128,11 +128,11 @@ public partial class Player : RigidBody3D
         ApplyCentralForce(totalForce);
 
         Vector3 totalTorque = Vector3.Zero;
-        totalTorque += _frontLeftWing.Position.Cross(_frontLeftWing.CalculateRotatoryForce());
-        totalTorque += _frontRightWing.Position.Cross(_frontRightWing.CalculateRotatoryForce());
-        totalTorque += _backLeftWing.Position.Cross(_backLeftWing.CalculateRotatoryForce());
-        totalTorque += _backRightWing.Position.Cross(_backRightWing.CalculateRotatoryForce());
-        totalTorque += _rudder.Position.Cross(_rudder.CalculateRotatoryForce());
+        totalTorque += (_frontLeftWing.Position - CenterOfMass).Cross(_frontLeftWing.CalculateRotatoryForce());
+        totalTorque += (_frontRightWing.Position - CenterOfMass).Cross(_frontRightWing.CalculateRotatoryForce());
+        totalTorque += (_backLeftWing.Position - CenterOfMass).Cross(_backLeftWing.CalculateRotatoryForce());
+        totalTorque += (_backRightWing.Position - CenterOfMass).Cross(_backRightWing.CalculateRotatoryForce());
+        totalTorque += (_rudder.Position - CenterOfMass).Cross(_rudder.CalculateRotatoryForce());
 
         ApplyTorque(totalTorque);
     }

@@ -5,216 +5,102 @@ public partial class Wing : Node3D
 {
     [ExportGroup("Wing Properties")]
     [Export]
-    private float SkinFrictionCoeff = .02f;
+    private float SkinFrictionCoefficient = .02f;
     [Export]
-    private float ZeroAOABase = 0;
+    private float AspectRatio = 4f;
     [Export]
-    private float AspectRatio = 2f;
+    private float ZeroLiftAoABase = 0;
     [Export]
-    private float Chord = 1f;
+    private float FlapFraction = .4f;
     [Export]
-    private float FlapFraction = .1f;
+    private float StallAngleHighBaseDeg = 15f;
     [Export]
-    private float DeltaFlapAngle = .3f;
+    private float StallAngleLowBaseDeg = -15f;
 
-    private float _cLAlpha;
-    private float _surfaceArea;
-    private float _liftCoeffNegMaxBase;
-    private float _liftCoeffPosMaxBase;
+    private float _correctedLiftSlope;
+    private float _theta;
+    private float _flapEffectivenessFactor;
+    private float _stallAngleHighBase;
+    private float _stallAngleLowBase;
 
     private Player _aircraft;
     private Global _global;
-    private Vector3 _positionFromCOM;
-    private Vector3 _velocity;
-    private Vector3 _wind;
-    private float _dragCoeffAtStall;
-    private float _coeffOfLift;
-    private float _coeffOfDrag;
-    private float _coeffOfTorque;
-    private float _lift;
-    private float _drag;
-    private float _torque;
+    private Vector3 _positionFromCoM;
     private float _flapAngle;
-    private float _cNu;
 
     public Wing()
     {
-        _surfaceArea = Chord * Chord * AspectRatio;
-        _cNu = 1 - Mathf.Exp(-17 / AspectRatio);
+        _theta = Mathf.Acos(2 * FlapFraction - 1);
+        _flapEffectivenessFactor = 1 - (_theta - Mathf.Sin(_theta)) / Mathf.Pi;
     }
 
     public override void _Ready()
     {
         _aircraft = GetOwner<Player>();
         _global = GetNode<Global>("/root/Global");
-        _cLAlpha = _global.LiftCurveSlope * (AspectRatio / (AspectRatio + 2 * (AspectRatio + 4) / (AspectRatio + 2)));
-        _liftCoeffPosMaxBase = _cLAlpha * (_global.AlphaStallPosBase - ZeroAOABase) + _global.DeltaCLMax;
-        _liftCoeffNegMaxBase = _cLAlpha * (_global.AlphaStallNegBase - ZeroAOABase) + _global.DeltaCLMax;
-        _positionFromCOM = Position - _aircraft.CenterOfMass;
+        _correctedLiftSlope = _global.LiftSlope * (AspectRatio / (AspectRatio + 2 * (AspectRatio + 4) / (AspectRatio + 2)));
+        _positionFromCoM = Position - _aircraft.CenterOfMass;
+        _stallAngleHighBase = Mathf.DegToRad(StallAngleHighBaseDeg);
+        _stallAngleLowBase = Mathf.DegToRad(StallAngleLowBaseDeg);
     }
 
-    public override void _Process(double delta)
+    public Vector3 CalculateCoefficients(float angleOfAttack, float flapAngle)
     {
-        // GD.PrintS(_coeffOfLift, _coeffOfDrag, _coeffOfTorque);
-    }
+        float deltaLiftCoeff = _correctedLiftSlope * _flapEffectivenessFactor * _flapEffectivenessFactor * FlapEffectivenessCorrection(flapAngle) * flapAngle;
+        float zeroLiftAoA = ZeroLiftAoABase - deltaLiftCoeff / _correctedLiftSlope;
 
-    public override void _PhysicsProcess(double delta)
-    {
-        _velocity = -ToLocalBasis(_aircraft.LinearVelocity) + _aircraft.AngularVelocity.Cross(_positionFromCOM) + _wind;
-        _velocity = new Vector3(0, _velocity.Y, _velocity.Z);
-        UpdateCoefficients();
-        ResetFlap();
-    }
+        float liftCoeffMaxHigh = _correctedLiftSlope * (_stallAngleHighBase - ZeroLiftAoABase) + deltaLiftCoeff * LiftCoefficientMaxFraction(FlapFraction);
+        float liftCoeffMaxLow = _correctedLiftSlope * (_stallAngleLowBase - ZeroLiftAoABase) + deltaLiftCoeff * LiftCoefficientMaxFraction(FlapFraction);
 
-    private void UpdateCoefficients()
-    {
-        float alpha, zeroLiftAoA;
-        float theta = Mathf.Acos(2 * FlapFraction - 1);
-        float tau = 1 - (theta - Mathf.Sin(theta)) / Mathf.Pi;
+        float stallAngleHigh = zeroLiftAoA + liftCoeffMaxHigh / _correctedLiftSlope;
+        float stallAngleLow = zeroLiftAoA + liftCoeffMaxLow / _correctedLiftSlope;
 
-        alpha = Mathf.Atan2(_velocity.Y, _velocity.Z);
-        GD.PrintS(Name, alpha);
+        bool isStalling = false;
+        if (!(angleOfAttack < stallAngleHigh && angleOfAttack > stallAngleLow))
+            isStalling = true;
+        float coeffOfLift = 0, coeffOfDrag = 0, coeffOfTorque = 0;
 
-        zeroLiftAoA = ZeroAOABase - tau * FlapEffectivenessCorrection(_flapAngle) * _flapAngle;
-
-        _dragCoeffAtStall = -4.26e-2f * _flapAngle * _flapAngle + 2.1e-1f * _flapAngle + 1.98f;
-
-        float alphaStallPos = zeroLiftAoA + _liftCoeffPosMaxBase / _cLAlpha;
-        float alphaStallNeg = zeroLiftAoA + _liftCoeffNegMaxBase / _cLAlpha;
-
-        float paddingAnglePos = Mathf.DegToRad(Mathf.Lerp(15, 5, (Mathf.RadToDeg(_flapAngle) + 50) / 100));
-        float paddingAngleNeg = Mathf.DegToRad(Mathf.Lerp(15, 5, (-Mathf.RadToDeg(_flapAngle) + 50) / 100));
-        float paddedStallAnglePos = alphaStallPos + paddingAnglePos;
-        float paddedStallAngleNeg = alphaStallNeg - paddingAngleNeg;
-
-        if (alpha < alphaStallPos && alpha > alphaStallNeg)
+        if (!isStalling)
         {
-            Vector3 coeffs = CalculateCoeffsAtLowAoA(alpha, zeroLiftAoA);
-            _coeffOfLift = coeffs.X;
-            _coeffOfDrag = coeffs.Y;
-            _coeffOfTorque = coeffs.Z;
+            coeffOfLift = _correctedLiftSlope * (angleOfAttack - ZeroLiftAoABase);
+            float inducedAngle = coeffOfLift / (Mathf.Pi * AspectRatio);
+            float effectiveAoA = angleOfAttack - zeroLiftAoA - inducedAngle;
+            float tangentialCoeff = SkinFrictionCoefficient * Mathf.Cos(effectiveAoA);
+            float normalCoeff = (coeffOfLift + tangentialCoeff * Mathf.Sin(effectiveAoA)) / Mathf.Cos(effectiveAoA);
+            coeffOfDrag = normalCoeff * Mathf.Sin(effectiveAoA) + tangentialCoeff * Mathf.Cos(effectiveAoA);
+            coeffOfTorque = -normalCoeff * (.25f - .175f * (1 - 2f * effectiveAoA / Mathf.Pi));
         }
         else
         {
-            if (alpha > paddedStallAnglePos || alpha < paddedStallAngleNeg)
-            {
-                Vector3 coeffs = CalculateCoeffsAtStall(alpha, zeroLiftAoA, alphaStallPos, alphaStallNeg);
-                _coeffOfLift = coeffs.X;
-                _coeffOfDrag = coeffs.Y;
-                _coeffOfTorque = coeffs.Z;
-            }
+            coeffOfLift = _correctedLiftSlope * (angleOfAttack - zeroLiftAoA);
+            float inducedAngle;
+            if (angleOfAttack > stallAngleHigh)
+                inducedAngle = Mathf.Lerp(coeffOfLift / (Mathf.Pi * AspectRatio), 0, (angleOfAttack - stallAngleHigh) / (Mathf.Pi / 2 - stallAngleHigh));
             else
-            {
-                float lerpParam;
-                Vector3 aerodynamicCoefficientsLow;
-                Vector3 aerodynamicCoefficientsStall;
-
-                if (alpha > alphaStallPos)
-                {
-                    aerodynamicCoefficientsLow = CalculateCoeffsAtLowAoA(alphaStallPos, zeroLiftAoA);
-                    aerodynamicCoefficientsStall = CalculateCoeffsAtStall(paddedStallAnglePos, zeroLiftAoA, alphaStallPos, alphaStallNeg);
-                    lerpParam = (alpha - alphaStallPos) / (paddedStallAnglePos - alphaStallPos);
-                }
-                else
-                {
-                    aerodynamicCoefficientsLow = CalculateCoeffsAtLowAoA(alphaStallNeg, zeroLiftAoA);
-                    aerodynamicCoefficientsStall = CalculateCoeffsAtStall(paddedStallAngleNeg, zeroLiftAoA, alphaStallPos, alphaStallNeg);
-                    lerpParam = (alpha - alphaStallPos) / (paddedStallAnglePos - alphaStallPos);
-                }
-                Vector3 coeffs = aerodynamicCoefficientsLow.Lerp(aerodynamicCoefficientsStall, lerpParam);
-                _coeffOfLift = coeffs.X;
-                _coeffOfDrag = coeffs.Y;
-                _coeffOfTorque = coeffs.Z;
-            }
+                inducedAngle = Mathf.Lerp(coeffOfLift / (Mathf.Pi * AspectRatio), 0, (angleOfAttack - stallAngleLow) / (-Mathf.Pi / 2 - stallAngleLow));
+            float effectiveAoA = angleOfAttack - zeroLiftAoA - inducedAngle;
+            float normalCoeff = Calculate2DDragCoefficient(flapAngle) * Mathf.Sin(effectiveAoA) * (1 / (.56f + .44f * Mathf.Abs(Mathf.Sin(effectiveAoA))) - .41f * (1f - Mathf.Exp(-17f / AspectRatio)));
+            float tangentialCoeff = .5f * SkinFrictionCoefficient * Mathf.Cos(effectiveAoA);
+            coeffOfLift = normalCoeff * Mathf.Cos(effectiveAoA) - tangentialCoeff * Mathf.Sin(effectiveAoA);
+            coeffOfDrag = normalCoeff * Mathf.Sin(effectiveAoA) + tangentialCoeff * Mathf.Cos(effectiveAoA);
+            coeffOfTorque = -normalCoeff * (.25f - .175f * (1 - 2 * effectiveAoA / Mathf.Pi));
         }
-        GD.PrintS(Name, _lift, _drag, _torque);
-    }
-
-    public void FlapUp()
-    {
-        _flapAngle = DeltaFlapAngle;
-    }
-
-    public void FlapDown()
-    {
-        _flapAngle = -DeltaFlapAngle;
-    }
-
-    private void ResetFlap()
-    {
-        _flapAngle = 0;
-    }
-
-    public Vector3 CalculateLift()
-    {
-        _lift = _coeffOfLift * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * _surfaceArea;
-        return _lift * Vector3.Up;
-    }
-
-    public Vector3 CalculateDrag()
-    {
-        _drag = _coeffOfDrag * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * _surfaceArea;
-        return _drag * Vector3.Back;
-    }
-
-    public Vector3 CalculateRotatoryForce()
-    {
-        _torque = _coeffOfTorque * _global.AirDensity * _aircraft.LinearVelocity.Length() / 2 * _surfaceArea;
-        return _torque * Vector3.Up;
-    }
-
-    private Vector3 CalculateCoeffsAtLowAoA(float alpha, float zeroLiftAOA)
-    {
-        float coeffOfLift = _cLAlpha * (alpha - zeroLiftAOA);
-        float alphaEffictive = alpha - zeroLiftAOA - coeffOfLift / (Mathf.Pi * AspectRatio);
-        float tangentialCoeff = SkinFrictionCoeff * Mathf.Cos(alphaEffictive);
-        float normalCoeff = (coeffOfLift + tangentialCoeff * Mathf.Sin(alphaEffictive)) / Mathf.Cos(alphaEffictive);
-        float coeffOfDrag = normalCoeff * Mathf.Sin(alphaEffictive) + tangentialCoeff * Mathf.Cos(alphaEffictive);
-        float coeffOfTorque = -normalCoeff * (.25f - .175f * (1 - 2 * Mathf.Abs(alphaEffictive) / Mathf.Pi));
 
         return new Vector3(coeffOfLift, coeffOfDrag, coeffOfTorque);
-    }
-
-    private Vector3 CalculateCoeffsAtStall(float alpha, float zeroLiftAoA, float alphaStallPos, float alphaStallNeg)
-    {
-        float coeffOfLift;
-        if (alpha > alphaStallPos)
-        {
-            coeffOfLift = _cLAlpha * (alphaStallPos - zeroLiftAoA);
-        }
-        else
-        {
-            coeffOfLift = _cLAlpha * (alphaStallNeg - zeroLiftAoA);
-        }
-
-        float lerpParam;
-        if (alpha > alphaStallPos)
-        {
-            lerpParam = (Mathf.Pi / 2 - Mathf.Clamp(alpha, -Mathf.Pi / 2, Mathf.Pi / 2)) / (Mathf.Pi / 2 - alphaStallPos);
-        }
-        else
-        {
-            lerpParam = (-Mathf.Pi / 2 - Mathf.Clamp(alpha, -Mathf.Pi / 2, Mathf.Pi / 2)) / (-Mathf.Pi / 2 - alphaStallNeg);
-        }
-
-        float alphaEffective = alpha - zeroLiftAoA - Mathf.Lerp(0, coeffOfLift / (Mathf.Pi * AspectRatio), lerpParam);
-        float normalCoeff = _dragCoeffAtStall * Mathf.Sin(alphaEffective) * (1 / (.56f + .44f * Mathf.Sin(alphaEffective)) - .41f * _cNu);
-        float tangentCoeff = .5f * SkinFrictionCoeff * Mathf.Cos(alphaEffective);
-        coeffOfLift = normalCoeff * Mathf.Cos(alphaEffective) - tangentCoeff * Mathf.Sin(alphaEffective);
-        float coeffOfDrag = normalCoeff * Mathf.Sin(alphaEffective) + tangentCoeff * Mathf.Cos(alphaEffective);
-        float coeffOfTorque = -normalCoeff * (.25f - .175f * (1f - 2f * alphaEffective / Mathf.Pi));
-
-        return new Vector3(coeffOfLift, coeffOfDrag, coeffOfTorque);
-    }
-
-    private Vector3 ToLocalBasis(Vector3 v)
-    {
-        Basis basis = Transform.Basis.Transposed();
-        return new Vector3(basis.X.Dot(v), basis.Y.Dot(v), basis.Z.Dot(v));
     }
 
     private float FlapEffectivenessCorrection(float flapAngle)
     {
-        return Mathf.Lerp(0.8f, 0.4f, (Mathf.RadToDeg(Mathf.Abs(flapAngle)) - 10) / 50);
+        return Mathf.Lerp(.8f, .4f, (Mathf.RadToDeg(Mathf.Abs(flapAngle)) - 10) / 50);
+    }
+
+    private float LiftCoefficientMaxFraction(float flapFraction)
+    {
+        return Mathf.Clamp(0, 1, 1f - .5f * (flapFraction - .1f) / .3f);
+    }
+
+    private float Calculate2DDragCoefficient(float flapAngle)
+    {
+        return -4.26e-2f * flapAngle * flapAngle + 2.1e-1f * flapAngle + 1.98f;
     }
 }
