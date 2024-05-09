@@ -935,7 +935,7 @@ shadow_mesh = SubResource("ArrayMesh_sgjdr")
 
 [node name="Player" type="RigidBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.745585, -1.09071)
-mass = 100.0
+mass = 10.0
 physics_material_override = SubResource("PhysicsMaterial_r7lty")
 center_of_mass_mode = 1
 center_of_mass = Vector3(0, 0.792062, 0.982426)

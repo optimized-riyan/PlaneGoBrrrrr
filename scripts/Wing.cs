@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Godot;
 
 public partial class Wing : Node3D
@@ -16,22 +17,30 @@ public partial class Wing : Node3D
     private float StallAngleHighBaseDeg = 15f;
     [Export]
     private float StallAngleLowBaseDeg = -15f;
+    [Export]
+    private float Chord = 3f;
 
     private float _correctedLiftSlope;
     private float _theta;
     private float _flapEffectivenessFactor;
     private float _stallAngleHighBase;
     private float _stallAngleLowBase;
+    private float _surfaceArea;
 
     private Player _aircraft;
     private Global _global;
     private Vector3 _positionFromCoM;
+    private Vector3 _velocity;
     private float _flapAngle;
+    private float _coeffOfLift;
+    private float _coeffOfDrag;
+    private float _coeffOfTorque;
 
     public Wing()
     {
         _theta = Mathf.Acos(2 * FlapFraction - 1);
         _flapEffectivenessFactor = 1 - (_theta - Mathf.Sin(_theta)) / Mathf.Pi;
+        _surfaceArea = Chord * Chord * AspectRatio;
     }
 
     public override void _Ready()
@@ -44,7 +53,21 @@ public partial class Wing : Node3D
         _stallAngleLowBase = Mathf.DegToRad(StallAngleLowBaseDeg);
     }
 
-    public Vector3 CalculateCoefficients(float angleOfAttack, float flapAngle)
+    public override void _PhysicsProcess(double delta)
+    {
+        UpdateCoefficients();
+    }
+
+    private void UpdateCoefficients()
+    {
+        _velocity = -(Basis * _aircraft.LinearVelocity) + _aircraft.AngularVelocity.Cross(_positionFromCoM); 
+        _velocity = new Vector3(0, _velocity.Y, _velocity.Z);
+        float angleOfAttack = Mathf.Atan2(_velocity.Y, _velocity.Z);
+
+        (_coeffOfLift, _coeffOfDrag, _coeffOfTorque) = CalculateCoefficients(angleOfAttack, _flapAngle);
+    }
+
+    private Vector3 CalculateCoefficients(float angleOfAttack, float flapAngle)
     {
         float deltaLiftCoeff = _correctedLiftSlope * _flapEffectivenessFactor * _flapEffectivenessFactor * FlapEffectivenessCorrection(flapAngle) * flapAngle;
         float zeroLiftAoA = ZeroLiftAoABase - deltaLiftCoeff / _correctedLiftSlope;
@@ -58,7 +81,7 @@ public partial class Wing : Node3D
         bool isStalling = false;
         if (!(angleOfAttack < stallAngleHigh && angleOfAttack > stallAngleLow))
             isStalling = true;
-        float coeffOfLift = 0, coeffOfDrag = 0, coeffOfTorque = 0;
+        float coeffOfLift, coeffOfDrag, coeffOfTorque;
 
         if (!isStalling)
         {
@@ -89,18 +112,47 @@ public partial class Wing : Node3D
         return new Vector3(coeffOfLift, coeffOfDrag, coeffOfTorque);
     }
 
-    private float FlapEffectivenessCorrection(float flapAngle)
+    public Vector3[] GetForces(Vector3 positionFromCoM)
+    {
+        float velSq = _velocity.LengthSquared();
+        // the forces will need to be converted to the plane's coordinates
+        // TODO: verify
+        Vector3 lift = _coeffOfLift * _global.AirProfileConstant * velSq * _surfaceArea * _velocity.Normalized().Cross(Vector3.Right);
+        Vector3 drag = _coeffOfDrag * _global.AirProfileConstant * velSq * _surfaceArea * _velocity.Normalized();
+        Vector3 torque = _coeffOfTorque * _global.AirProfileConstant * velSq * _surfaceArea * positionFromCoM.Cross(Vector3.Up);
+        
+        Vector3[] array = [lift+drag, torque];
+
+        return array;
+    }
+
+    private static float FlapEffectivenessCorrection(float flapAngle)
     {
         return Mathf.Lerp(.8f, .4f, (Mathf.RadToDeg(Mathf.Abs(flapAngle)) - 10) / 50);
     }
 
-    private float LiftCoefficientMaxFraction(float flapFraction)
+    private static float LiftCoefficientMaxFraction(float flapFraction)
     {
-        return Mathf.Clamp(0, 1, 1f - .5f * (flapFraction - .1f) / .3f);
+        return Mathf.Clamp(1f - .5f * (flapFraction - .1f) / .3f, 0, 1f);
     }
 
-    private float Calculate2DDragCoefficient(float flapAngle)
+    private static float Calculate2DDragCoefficient(float flapAngle)
     {
         return -4.26e-2f * flapAngle * flapAngle + 2.1e-1f * flapAngle + 1.98f;
+    }
+
+    public void FlapUp()
+    {
+        _flapAngle = .3f;
+    }
+
+    public void FlapDown()
+    {
+        _flapAngle = -3f;
+    }
+
+    public void ResetFlap()
+    {
+        _flapAngle = 0;
     }
 }

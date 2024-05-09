@@ -109,32 +109,35 @@ public partial class Player : RigidBody3D
             _rudder.FlapUp();
         }
 
+        Vector3[] forceArray;
         Vector3 totalForce = Vector3.Zero;
-        totalForce += _frontLeftWing.CalculateLift() + _frontLeftWing.CalculateDrag();
-        totalForce += _frontRightWing.CalculateLift() + _frontRightWing.CalculateDrag();
-        totalForce += _backLeftWing.CalculateLift() + _backLeftWing.CalculateDrag();
-        totalForce += _backRightWing.CalculateLift() + _backRightWing.CalculateDrag();
-        totalForce += _rudder.CalculateLift() + _rudder.CalculateDrag();
+        Vector3 totalTorque = Vector3.Zero;
+        forceArray = _frontLeftWing.GetForces(_frontLeftWing.Position - CenterOfMass);
+        totalForce += forceArray[0];
+        totalTorque += forceArray[1];
+        forceArray = _frontRightWing.GetForces(_frontRightWing.Position - CenterOfMass);
+        totalForce += forceArray[0];
+        totalTorque += forceArray[1];
+        forceArray = _backLeftWing.GetForces(_backLeftWing.Position - CenterOfMass);
+        totalForce += forceArray[0];
+        totalTorque += forceArray[1];
+        forceArray = _backRightWing.GetForces(_backRightWing.Position - CenterOfMass);
+        totalForce += forceArray[0];
+        totalTorque += forceArray[1];
+        forceArray = _rudder.GetForces(_rudder.Position - CenterOfMass);
+        totalForce += forceArray[0];
+        totalTorque += forceArray[1];
+        ApplyCentralForce(Basis * totalForce);
+        ApplyTorque(Basis * totalTorque);
 
         if (_accelerate)
         {
-            if (LinearVelocity.Length() < MaxSpeed) totalForce += -Thrust * Transform.Basis.Z;
+            if (LinearVelocity.Length() < MaxSpeed) ApplyCentralForce(-Thrust * Basis.Z);
         }
         if (_decelerate)
         {
-            if (LinearVelocity.Length() < MinSpeed) totalForce += Thrust / 2 * Transform.Basis.Z;
+            if (LinearVelocity.Length() < MinSpeed) ApplyCentralForce(Thrust * Basis.Z);
         }
-
-        ApplyCentralForce(totalForce);
-
-        Vector3 totalTorque = Vector3.Zero;
-        totalTorque += (_frontLeftWing.Position - CenterOfMass).Cross(_frontLeftWing.CalculateRotatoryForce());
-        totalTorque += (_frontRightWing.Position - CenterOfMass).Cross(_frontRightWing.CalculateRotatoryForce());
-        totalTorque += (_backLeftWing.Position - CenterOfMass).Cross(_backLeftWing.CalculateRotatoryForce());
-        totalTorque += (_backRightWing.Position - CenterOfMass).Cross(_backRightWing.CalculateRotatoryForce());
-        totalTorque += (_rudder.Position - CenterOfMass).Cross(_rudder.CalculateRotatoryForce());
-
-        ApplyTorque(totalTorque);
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = false, TransferChannel = 0, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
