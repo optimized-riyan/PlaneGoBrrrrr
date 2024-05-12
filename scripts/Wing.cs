@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using Godot;
 
 public partial class Wing : Node3D
@@ -19,6 +17,8 @@ public partial class Wing : Node3D
     private float StallAngleLowBaseDeg = -15f;
     [Export]
     private float Chord = 3f;
+    [Export]
+    private float FlapAngleDeflection = 30f;    // in degrees
 
     private float _correctedLiftSlope;
     private float _theta;
@@ -31,7 +31,7 @@ public partial class Wing : Node3D
     private Global _global;
     private Vector3 _positionFromCoM;
     private Vector3 _velocity;
-    private float _flapAngle;
+    private float _flapAngle = 0;
     private float _coeffOfLift;
     private float _coeffOfDrag;
     private float _coeffOfTorque;
@@ -53,14 +53,19 @@ public partial class Wing : Node3D
         _stallAngleLowBase = Mathf.DegToRad(StallAngleLowBaseDeg);
     }
 
+    public override void _Process(double delta)
+    {
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         UpdateCoefficients();
+        ResetFlap();
     }
 
     private void UpdateCoefficients()
     {
-        _velocity = -(Basis * _aircraft.LinearVelocity) + _aircraft.AngularVelocity.Cross(_positionFromCoM); 
+        _velocity = -(Basis * _aircraft.LinearVelocity) - _aircraft.AngularVelocity.Cross(_positionFromCoM); 
         _velocity = new Vector3(0, _velocity.Y, _velocity.Z);
         float angleOfAttack = Mathf.Atan2(_velocity.Y, _velocity.Z);
 
@@ -112,14 +117,13 @@ public partial class Wing : Node3D
         return new Vector3(coeffOfLift, coeffOfDrag, coeffOfTorque);
     }
 
-    public Vector3[] GetForces(Vector3 positionFromCoM)
+    public Vector3[] GetForces()
     {
         float velSq = _velocity.LengthSquared();
-        // the forces will need to be converted to the plane's coordinates
-        // TODO: verify
-        Vector3 lift = _coeffOfLift * _global.AirProfileConstant * velSq * _surfaceArea * _velocity.Normalized().Cross(Vector3.Right);
+        Vector3 lift = _coeffOfLift * _global.AirProfileConstant * velSq * _surfaceArea * _velocity.Normalized().Cross(Vector3.Right).Normalized();
         Vector3 drag = _coeffOfDrag * _global.AirProfileConstant * velSq * _surfaceArea * _velocity.Normalized();
-        Vector3 torque = _coeffOfTorque * _global.AirProfileConstant * velSq * _surfaceArea * positionFromCoM.Cross(Vector3.Up);
+        Vector3 torque = _coeffOfTorque * _global.AirProfileConstant * velSq * _surfaceArea * _positionFromCoM.Cross(Vector3.Up);
+        GD.PrintS(Name, torque);
         
         Vector3[] array = [lift+drag, torque];
 
@@ -143,12 +147,12 @@ public partial class Wing : Node3D
 
     public void FlapUp()
     {
-        _flapAngle = .3f;
+        _flapAngle = Mathf.DegToRad(FlapAngleDeflection);
     }
 
     public void FlapDown()
     {
-        _flapAngle = -3f;
+        _flapAngle = -Mathf.DegToRad(FlapAngleDeflection);
     }
 
     public void ResetFlap()

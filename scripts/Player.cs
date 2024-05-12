@@ -7,7 +7,7 @@ public partial class Player : RigidBody3D
 
     private const float MaxSpeed = 50f;
     private const float MinSpeed = 0f;
-    private const float Thrust = 1500f;
+    private const float Thrust = 15000f;
 
     private Node3D _jetModel;
     private Camera3D _thirdPersonCam;
@@ -44,8 +44,6 @@ public partial class Player : RigidBody3D
         _backLeftWing = GetNode<Wing>("BackLeftWing");
         _backRightWing = GetNode<Wing>("BackRightWing");
         _rudder = GetNode<Wing>("Rudder");
-
-        ApplyCentralImpulse(new Vector3(0, 0, -200));
     }
 
     public override void _Process(double delta)
@@ -112,31 +110,31 @@ public partial class Player : RigidBody3D
         Vector3[] forceArray;
         Vector3 totalForce = Vector3.Zero;
         Vector3 totalTorque = Vector3.Zero;
-        forceArray = _frontLeftWing.GetForces(_frontLeftWing.Position - CenterOfMass);
+        forceArray = _frontLeftWing.GetForces();
         totalForce += forceArray[0];
         totalTorque += forceArray[1];
-        forceArray = _frontRightWing.GetForces(_frontRightWing.Position - CenterOfMass);
+        forceArray = _frontRightWing.GetForces();
         totalForce += forceArray[0];
         totalTorque += forceArray[1];
-        forceArray = _backLeftWing.GetForces(_backLeftWing.Position - CenterOfMass);
+        forceArray = _backLeftWing.GetForces();
         totalForce += forceArray[0];
         totalTorque += forceArray[1];
-        forceArray = _backRightWing.GetForces(_backRightWing.Position - CenterOfMass);
+        forceArray = _backRightWing.GetForces();
         totalForce += forceArray[0];
         totalTorque += forceArray[1];
-        forceArray = _rudder.GetForces(_rudder.Position - CenterOfMass);
+        forceArray = _rudder.GetForces();
         totalForce += forceArray[0];
         totalTorque += forceArray[1];
-        ApplyCentralForce(Basis * totalForce);
+        ApplyForce(Basis * totalForce);
         ApplyTorque(Basis * totalTorque);
 
         if (_accelerate)
         {
-            if (LinearVelocity.Length() < MaxSpeed) ApplyCentralForce(-Thrust * Basis.Z);
+            ApplyCentralForce(-Thrust * Basis.Z);
         }
         if (_decelerate)
         {
-            if (LinearVelocity.Length() < MinSpeed) ApplyCentralForce(Thrust * Basis.Z);
+            ApplyCentralForce(Thrust * Basis.Z);
         }
     }
 

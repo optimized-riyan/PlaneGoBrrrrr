@@ -19,15 +19,15 @@ fog_density = 0.0158
 volumetric_fog_albedo = Color(1, 0.2, 0.211765, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_tx52u"]
-size = Vector3(254.896, 1, 255.26)
+size = Vector3(1000, 1, 1000)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1udci"]
 albedo_texture = ExtResource("2_8638c")
-uv1_scale = Vector3(2.43, 2.43, 2.43)
-uv1_offset = Vector3(0.32, 0, 0)
+uv1_scale = Vector3(100, 100, 100)
 
 [sub_resource type="BoxMesh" id="BoxMesh_n5vkw"]
 material = SubResource("StandardMaterial3D_1udci")
+size = Vector3(1000, 1, 1000)
 
 [sub_resource type="LabelSettings" id="LabelSettings_cph1f"]
 font_size = 32
@@ -56,11 +56,11 @@ shadow_enabled = true
 shape = SubResource("BoxShape3D_tx52u")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-transform = Transform3D(255, 0, 0, 0, 1, 0, 0, 0, 255, 0, 0, 0)
 mesh = SubResource("BoxMesh_n5vkw")
 
 [node name="Player" parent="." instance=ExtResource("2_istcs")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.3491, -1.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.561622, -1.1)
+mass = 2000.0
 
 [node name="GameTimer" type="Timer" parent="."]
 wait_time = 600.0

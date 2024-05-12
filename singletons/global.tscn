@@ -4,3 +4,4 @@
 
 [node name="Global" type="Node"]
 script = ExtResource("1_m5g8o")
+AirProfileConstant = 3.0
